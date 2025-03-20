@@ -1,0 +1,82 @@
+{% extends "theme/base.html" %}
+{% load static %}
+
+{% block title %}Upload Document{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <nav class="text-sm breadcrumbs mb-6">
+        <ul>
+            <li><a href="{% url 'documents:document_list' %}">Documents</a></li>
+            <li>Upload Document</li>
+        </ul>
+    </nav>
+    
+    <div class="card bg-base-100 shadow max-w-3xl mx-auto">
+        <div class="card-body">
+            <h2 class="card-title mb-6">Upload New Document</h2>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Title *</span>
+                        </label>
+                        <input type="text" name="title" required class="input input-bordered" placeholder="Document title">
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Category</span>
+                        </label>
+                        <select name="category" class="select select-bordered w-full">
+                            <option value="">No Category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">Description</span>
+                    </label>
+                    <textarea name="description" class="textarea textarea-bordered" placeholder="Document description"></textarea>
+                </div>
+                
+                <div class="form-control mb-4">
+                    <label class="label">
+                        <span class="label-text">Tags</span>
+                    </label>
+                    <input type="text" name="tags" class="input input-bordered" placeholder="Comma-separated tags">
+                    <label class="label">
+                        <span class="label-text-alt">Separate tags with commas: legal, contract, draft</span>
+                    </label>
+                </div>
+                
+                <div class="form-control mb-6">
+                    <label class="label">
+                        <span class="label-text">File *</span>
+                    </label>
+                    <input type="file" name="file" required class="file-input file-input-bordered w-full">
+                </div>
+                
+                <div class="form-control mb-6">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" name="is_private" checked class="checkbox">
+                        <span class="label-text">Private Document (restrict access to authorized users only)</span>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <a href="{% url 'documents:document_list' %}" class="btn btn-outline">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Upload Document</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

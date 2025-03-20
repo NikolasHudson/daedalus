@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='aws' %}">{% translate 'AWS Configuration' %}</a>
+{% if title %} &rsaquo; {{ title }}{% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+{% if title == "Select AWS Configuration to change" or title == "Select Bedrock Configuration to change" or title == "Select S3 Configuration to change" %}
+<div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px; border-left: 4px solid #2979ff;">
+    <h2 style="margin-top: 0; color: #2979ff;">AWS Configuration</h2>
+    
+    {% if title == "Select S3 Configuration to change" %}
+    <p>This section allows you to manage S3 bucket configurations for document storage and static files.</p>
+    
+    <h3>Important Notes:</h3>
+    <ul>
+        <li>Each S3 configuration requires valid AWS credentials with S3 access permissions</li>
+        <li>Bucket names must be globally unique across all of AWS</li>
+        <li>Only one active configuration can be used for media files and one for static files</li>
+        <li>After creating a configuration, use the "Validate Now" button to verify credentials</li>
+    </ul>
+    {% endif %}
+    
+    {% if title == "Select Bedrock Configuration to change" %}
+    <p>This section allows you to manage AWS Bedrock configurations for AI capabilities.</p>
+    
+    <h3>Important Notes:</h3>
+    <ul>
+        <li>AWS Bedrock is only available in specific regions (us-east-1, us-west-2, etc.)</li>
+        <li>You need to have Bedrock model access enabled in your AWS account</li>
+        <li>The default model ID should match a model available in your AWS account</li>
+        <li>After creating a configuration, use the "Validate Now" button to verify credentials</li>
+    </ul>
+    {% endif %}
+    
+    {% if title == "Select AWS Configuration to change" %}
+    <p>This section allows you to manage AWS credentials and service configurations.</p>
+    
+    <h3>Available Services:</h3>
+    <ul>
+        <li><a href="{% url 'admin:aws_s3configuration_changelist' %}">S3 Configuration</a> - For document storage and static files</li>
+        <li><a href="{% url 'admin:aws_bedrockconfiguration_changelist' %}">Bedrock Configuration</a> - For AI capabilities</li>
+    </ul>
+    
+    <p>Please refer to the <a href="{% url 'aws:setup_guide' %}">AWS Setup Guide</a> for detailed instructions.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{{ block.super }}
+{% endblock %}

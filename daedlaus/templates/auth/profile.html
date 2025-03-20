@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Profile | Daedalus - Legal Tech Platform{% endblock %}
+
+{% block content %}
+<div class="grid place-items-center mt-10">
+    <div class="card w-full max-w-lg bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl font-bold mb-4">Your Profile</h2>
+            
+            <div class="tabs mb-4">
+                <a class="tab tab-bordered tab-active">Profile Information</a>
+                <a href="{% url 'password_change' %}" class="tab tab-bordered">Change Password</a>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-error mb-4">
+                    {% for error in form.non_field_errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="divider my-2">Personal Information</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control w-full">
+                        <label for="{{ form.first_name.id_for_label }}" class="label">
+                            <span class="label-text">First Name</span>
+                        </label>
+                        <input type="text" name="{{ form.first_name.html_name }}" 
+                               id="{{ form.first_name.id_for_label }}" 
+                               class="input input-bordered w-full {% if form.first_name.errors %}input-error{% endif %}"
+                               placeholder="First Name" 
+                               value="{{ form.first_name.value|default:'' }}" />
+                        {% if form.first_name.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.first_name.errors.0 }}</span>
+                        </label>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-control w-full">
+                        <label for="{{ form.last_name.id_for_label }}" class="label">
+                            <span class="label-text">Last Name</span>
+                        </label>
+                        <input type="text" name="{{ form.last_name.html_name }}" 
+                               id="{{ form.last_name.id_for_label }}" 
+                               class="input input-bordered w-full {% if form.last_name.errors %}input-error{% endif %}"
+                               placeholder="Last Name" 
+                               value="{{ form.last_name.value|default:'' }}" />
+                        {% if form.last_name.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.last_name.errors.0 }}</span>
+                        </label>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="divider my-2">Account Information</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control w-full">
+                        <label for="{{ form.username.id_for_label }}" class="label">
+                            <span class="label-text">Username</span>
+                        </label>
+                        <input type="text" name="{{ form.username.html_name }}" 
+                               id="{{ form.username.id_for_label }}" 
+                               class="input input-bordered w-full {% if form.username.errors %}input-error{% endif %}"
+                               placeholder="Username" 
+                               value="{{ form.username.value|default:'' }}" />
+                        {% if form.username.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.username.errors.0 }}</span>
+                        </label>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-control w-full">
+                        <label for="{{ form.email.id_for_label }}" class="label">
+                            <span class="label-text">Email</span>
+                        </label>
+                        <input type="email" name="{{ form.email.html_name }}" 
+                               id="{{ form.email.id_for_label }}" 
+                               class="input input-bordered w-full {% if form.email.errors %}input-error{% endif %}"
+                               placeholder="your.email@example.com" 
+                               value="{{ form.email.value|default:'' }}" />
+                        {% if form.email.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.email.errors.0 }}</span>
+                        </label>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="divider my-2">Professional Information</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control w-full">
+                        <label for="{{ form.job_title.id_for_label }}" class="label">
+                            <span class="label-text">Job Title</span>
+                        </label>
+                        <input type="text" name="{{ form.job_title.html_name }}" 
+                               id="{{ form.job_title.id_for_label }}" 
+                               class="input input-bordered w-full {% if form.job_title.errors %}input-error{% endif %}"
+                               placeholder="Job Title" 
+                               value="{{ form.job_title.value|default:'' }}" />
+                        {% if form.job_title.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.job_title.errors.0 }}</span>
+                        </label>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-control w-full">
+                        <label for="{{ form.organization.id_for_label }}" class="label">
+                            <span class="label-text">Organization</span>
+                        </label>
+                        <input type="text" name="{{ form.organization.html_name }}" 
+                               id="{{ form.organization.id_for_label }}" 
+                               class="input input-bordered w-full {% if form.organization.errors %}input-error{% endif %}"
+                               placeholder="Organization" 
+                               value="{{ form.organization.value|default:'' }}" />
+                        {% if form.organization.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.organization.errors.0 }}</span>
+                        </label>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-control w-full mt-2">
+                    <label for="{{ form.phone_number.id_for_label }}" class="label">
+                        <span class="label-text">Phone Number</span>
+                    </label>
+                    <input type="tel" name="{{ form.phone_number.html_name }}" 
+                           id="{{ form.phone_number.id_for_label }}" 
+                           class="input input-bordered w-full {% if form.phone_number.errors %}input-error{% endif %}"
+                           placeholder="Phone Number" 
+                           value="{{ form.phone_number.value|default:'' }}" />
+                    {% if form.phone_number.errors %}
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ form.phone_number.errors.0 }}</span>
+                    </label>
+                    {% endif %}
+                </div>
+                
+                <div class="divider my-2">Preferences</div>
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-2">
+                        <input type="checkbox" name="{{ form.use_dark_mode.html_name }}" 
+                               id="{{ form.use_dark_mode.id_for_label }}"
+                               class="checkbox" 
+                               {% if form.use_dark_mode.value %}checked{% endif %} />
+                        <span class="label-text">Use Dark Mode</span>
+                    </label>
+                    {% if form.use_dark_mode.errors %}
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ form.use_dark_mode.errors.0 }}</span>
+                    </label>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-6">
+                    <button type="submit" class="btn btn-primary w-full">Update Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

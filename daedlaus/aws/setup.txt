@@ -1,0 +1,260 @@
+AWS Services Setup Guide
+============================
+
+This document provides detailed instructions for setting up the AWS services used in the Daedalus Legal Tech Platform.
+
+Table of Contents
+----------------
+1. General AWS Account Setup
+2. IAM User Setup for Application
+3. S3 Configuration
+4. AWS Bedrock Setup
+5. Security Best Practices
+6. Monitoring and Logging
+7. Cost Optimization
+
+1. General AWS Account Setup
+---------------------------
+1.1. Create an AWS Account
+- Visit https://aws.amazon.com and click "Create an AWS Account"
+- Follow the prompts to create your account
+
+1.2. Enable MFA for the Root Account
+- Sign in to the AWS Management Console
+- Click on your account name in the top right corner
+- Select "Security credentials"
+- Under "Multi-factor authentication (MFA)", select "Assign MFA device"
+- Follow the prompts to enable MFA
+
+1.3. Create an Administrator IAM User
+- Navigate to IAM in the AWS Management Console
+- Create a new user with AdministratorAccess policy
+- Set up MFA for this administrative user
+- Use this user for administrative tasks instead of the root account
+
+2. IAM User Setup for Application
+--------------------------------
+2.1. Create IAM User for the Application
+- Navigate to IAM in the AWS Management Console
+- Select "Users" and then "Create user"
+- Name the user "daedalus-app"
+- Select "Programmatic access" for access type
+- Do NOT grant any permissions yet (we'll use policies instead)
+
+2.2. Create IAM Policy for S3 Access
+- Navigate to IAM > Policies
+- Create a new policy with the following JSON:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+                "s3:ListBucketMultipartUploads",
+                "s3:ListBucketVersions"
+            ],
+            "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:AbortMultipartUpload",
+                "s3:ListMultipartUploadParts"
+            ],
+            "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+        }
+    ]
+}
+```
+- Name the policy "daedalus-s3-access"
+
+2.3. Create IAM Policy for Bedrock Access
+- Navigate to IAM > Policies
+- Create a new policy with the following JSON:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:ListFoundationModels",
+                "bedrock:GetFoundationModel"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+- Name the policy "daedalus-bedrock-access"
+
+2.4. Attach Policies to the IAM User
+- Navigate to IAM > Users
+- Select the "daedalus-app" user
+- Click "Add permissions"
+- Select "Attach existing policies directly"
+- Search for and select the policies created above
+- Click "Next: Review" and then "Add permissions"
+
+2.5. Generate Access Keys
+- While still on the user details page
+- Click "Security credentials" tab
+- Under "Access keys", click "Create access key"
+- Select "Application running outside AWS"
+- Copy the Access Key ID and Secret Access Key
+- Store them securely and enter them in the Django admin interface
+
+3. S3 Configuration
+-----------------
+3.1. Create S3 Bucket
+- Navigate to S3 in the AWS Management Console
+- Click "Create bucket"
+- Enter a unique bucket name
+- Select the appropriate region (us-east-2 is recommended)
+- Block all public access (keep all checkboxes checked)
+- Enable bucket versioning
+- Enable server-side encryption with Amazon S3-managed keys (SSE-S3)
+- Click "Create bucket"
+
+3.2. CORS Configuration (if needed)
+- Navigate to the bucket
+- Click "Permissions" tab
+- Scroll down to "Cross-origin resource sharing (CORS)"
+- Click "Edit" and add the following configuration:
+```json
+[
+    {
+        "AllowedHeaders": ["*"],
+        "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+        "AllowedOrigins": ["https://your-production-domain.com"],
+        "ExposeHeaders": ["ETag", "Content-Length"]
+    }
+]
+```
+- Replace "https://your-production-domain.com" with your actual domain
+
+3.3. Bucket Policy for Private Access
+- Navigate to the bucket
+- Click "Permissions" tab
+- Click "Bucket policy"
+- Add the following policy:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::YOUR-BUCKET-NAME",
+                "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+            ],
+            "Condition": {
+                "Bool": {
+                    "aws:SecureTransport": "false"
+                }
+            }
+        }
+    ]
+}
+```
+- This policy denies all non-HTTPS access to the bucket
+
+4. AWS Bedrock Setup
+------------------
+4.1. Enable AWS Bedrock
+- Navigate to AWS Bedrock in the AWS Management Console
+- Click "Get started" if this is your first time
+- Select "Model access" from the sidebar
+- Click "Manage model access"
+- Select the models you want to use (for example, "Anthropic Claude 3")
+- Click "Request model access"
+- Wait for approval (usually immediate for most models)
+
+4.2. Test Model Access
+- Navigate to AWS Bedrock in the Console
+- Select "Playground" from the sidebar
+- Choose a model from the dropdown
+- Test sending a prompt to ensure it works
+
+5. Security Best Practices
+------------------------
+5.1. Data Encryption
+- Ensure all S3 buckets have server-side encryption enabled
+- Use KMS for managing encryption keys when storing sensitive data
+- Configure TLS 1.2 or 1.3 for all data in transit
+
+5.2. IAM Best Practices
+- Follow the principle of least privilege
+- Use IAM roles instead of access keys when possible
+- Regularly audit IAM permissions using IAM Access Analyzer
+- Implement a key rotation policy for access keys
+
+5.3. Network Security
+- Use VPC for network isolation
+- Implement security groups with restrictive rules
+- Consider using a VPC endpoint for S3 to avoid public internet
+
+5.4. Logging and Monitoring
+- Enable CloudTrail for all regions
+- Configure CloudWatch Logs for all services
+- Set up CloudWatch Alarms for suspicious activities
+
+6. Monitoring and Logging
+-----------------------
+6.1. CloudWatch Alarms
+- Create alarms for:
+  - High S3 GET/PUT requests (unusual activity)
+  - High Bedrock API usage (cost control)
+  - Error rate spikes
+  - Latency issues
+
+6.2. CloudTrail Setup
+- Navigate to CloudTrail in the AWS Console
+- Create a new trail
+- Enable logging for all regions
+- Enable validation of log file integrity
+- Store logs in a dedicated, secure S3 bucket
+- Enable CloudWatch Logs integration
+
+6.3. S3 Access Logging
+- Navigate to your S3 bucket
+- Go to "Properties" tab
+- Find "Server access logging"
+- Click "Edit" and enable logging
+- Specify a target bucket for the logs
+
+7. Cost Optimization
+------------------
+7.1. S3 Cost Optimization
+- Configure lifecycle rules to transition objects to cheaper storage classes
+- Delete old versions of objects after a specified period
+- Set up S3 Analytics to identify patterns and optimize storage classes
+
+7.2. Bedrock Cost Control
+- Implement API usage quotas
+- Monitor and alert on high usage
+- Calculate cost per model and adjust usage accordingly
+- Consider caching responses for common queries
+
+7.3. Budget Setup
+- Navigate to AWS Budgets
+- Create a budget for your services
+- Set up alerts for when costs exceed thresholds
+- Review the Cost Explorer regularly
+
+---
+
+After completing this setup, enter the Access Key ID and Secret Access Key in the Django Admin Panel under AWS Configuration. The application will use these credentials to access AWS services.
+
+For any issues or questions, contact the system administrator.
+
+Last updated: March 18, 2025

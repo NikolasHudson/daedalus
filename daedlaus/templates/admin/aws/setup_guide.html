@@ -1,0 +1,31 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='aws' %}">{% translate 'AWS Configuration' %}</a>
+&rsaquo; {% translate 'Setup Guide' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>AWS Setup Guide</h1>
+
+<div class="aws-info-panel">
+    <p>This guide provides detailed instructions for setting up AWS services for the Daedalus Legal Tech Platform.</p>
+    
+    <h2>Contents</h2>
+    <ul>
+        <li><a href="#general-setup">General AWS Account Setup</a></li>
+        <li><a href="#iam-setup">IAM User Setup</a></li>
+        <li><a href="#s3-setup">S3 Configuration</a></li>
+        <li><a href="#bedrock-setup">AWS Bedrock Setup</a></li>
+        <li><a href="#security">Security Best Practices</a></li>
+        <li><a href="#monitoring">Monitoring and Logging</a></li>
+        <li><a href="#cost">Cost Optimization</a></li>
+    </ul>
+</div>
+
+<div style="white-space: pre-wrap; font-family: monospace; background-color: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 20px; overflow-x: auto;">{{ setup_guide }}</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+/* AWS Admin styles */
+
+.validation-status {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+}
+
+.validation-success {
+    color: #2e7d32;
+    background-color: #e8f5e9;
+    border-left: 4px solid #2e7d32;
+}
+
+.validation-error {
+    color: #c62828;
+    background-color: #ffebee;
+    border-left: 4px solid #c62828;
+}
+
+.validation-pending {
+    color: #f57c00;
+    background-color: #fff3e0;
+    border-left: 4px solid #f57c00;
+}
+
+.validation-button {
+    display: inline-block;
+    padding: 6px 12px;
+    margin: 8px 0;
+    background-color: #1976d2;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.validation-button:hover {
+    background-color: #1565c0;
+}
+
+/* Make sure sensitive fields are styled differently */
+.field-aws_access_key_id input,
+.field-aws_secret_access_key input {
+    font-family: monospace;
+    background-color: #f8f9fa;
+    border-left: 3px solid #6c757d;
+    padding-left: 8px;
+}
+
+/* Style the warning for credential fields */
+.field-aws_secret_access_key .help,
+.field-aws_access_key_id .help {
+    color: #e65100;
+    font-weight: bold;
+}
+
+/* Message box styles */
+.aws-message {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.aws-message pre {
+    margin: 8px 0;
+    padding: 8px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+/* Badge styles for list view */
+.validation-badge {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+}
+
+.validation-badge.success {
+    background-color: #4caf50;
+    color: white;
+}
+
+.validation-badge.error {
+    background-color: #f44336;
+    color: white;
+}
+
+.validation-badge.pending {
+    background-color: #ff9800;
+    color: white;
+}
+
+/* AWS info panel */
+.aws-info-panel {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #2979ff;
+}
+
+.aws-info-panel h2 {
+    margin-top: 0;
+    color: #2979ff;
+}
+
+.aws-info-panel h3 {
+    margin-top: 15px;
+    font-size: 16px;
+    color: #424242;
+}
+
+.aws-info-panel ul {
+    padding-left: 20px;
+}
+
+.aws-info-panel li {
+    margin-bottom: 5px;
+    list-style-type: square;
+}

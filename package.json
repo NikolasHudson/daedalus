@@ -1,0 +1,18 @@
+{
+  "name": "daedalus",
+  "version": "1.0.0",
+  "description": "A legal tech platform built with Django and AWS.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "npx @tailwindcss/cli -i app.css -o ./daedlaus/static/css/output.css"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.14",
+    "daisyui": "^5.0.6",
+    "tailwindcss": "^4.0.14"
+  }
+}

@@ -1,0 +1,133 @@
+{% extends "theme/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">{{ title }}</h1>
+        
+        {% if perms.documents.add_document %}
+        <a href="{% url 'documents:document_upload' %}" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Upload Document
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Filters -->
+    <div class="bg-base-200 p-4 rounded-lg mb-6">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Category</span>
+                </label>
+                <select name="category" class="select select-bordered w-full">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|slugify %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-control">
+                <button type="submit" class="btn btn-primary">
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    {% if documents %}
+    <div class="overflow-x-auto">
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for document in documents %}
+                <tr>
+                    <td>
+                        <a href="{% url 'documents:document_detail' document.uuid %}" class="font-medium text-primary hover:underline">
+                            {{ document.title }}
+                        </a>
+                    </td>
+                    <td>{{ document.category.name|default:"-" }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if document.status == 'draft' %}badge-warning{% endif %}
+                            {% if document.status == 'under_review' %}badge-info{% endif %}
+                            {% if document.status == 'approved' %}badge-success{% endif %}
+                            {% if document.status == 'archived' %}badge-neutral{% endif %}">
+                            {{ document.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ document.created_at|date:"M d, Y" }}</td>
+                    <td class="flex gap-2">
+                        <a href="{% url 'documents:document_detail' document.uuid %}" class="btn btn-sm btn-outline">
+                            View
+                        </a>
+                        {% if document.current_version %}
+                        <a href="{% url 'documents:document_download' document.uuid %}" class="btn btn-sm btn-outline">
+                            Download
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if documents.has_other_pages %}
+    <div class="pagination flex justify-center mt-6">
+        <div class="btn-group">
+            {% if documents.has_previous %}
+            <a href="?page={{ documents.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}" class="btn">
+                &laquo; Previous
+            </a>
+            {% else %}
+            <button class="btn btn-disabled">&laquo; Previous</button>
+            {% endif %}
+            
+            {% for num in documents.paginator.page_range %}
+                {% if documents.number == num %}
+                <button class="btn btn-active">{{ num }}</button>
+                {% else %}
+                <a href="?page={{ num }}{% if selected_category %}&category={{ selected_category }}{% endif %}" class="btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if documents.has_next %}
+            <a href="?page={{ documents.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}" class="btn">
+                Next &raquo;
+            </a>
+            {% else %}
+            <button class="btn btn-disabled">Next &raquo;</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="alert alert-info">
+        <div>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>No documents found. {% if perms.documents.add_document %}Start by uploading a document.{% endif %}</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
