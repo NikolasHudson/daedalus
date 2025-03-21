@@ -1,16 +1,17 @@
-{% extends "theme/base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Upload Document{% endblock %}
 
+{% block page_title %}Upload Document{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'documents:document_list' %}">Documents</a></li>
+<li>Upload Document</li>
+{% endblock %}
+
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <nav class="text-sm breadcrumbs mb-6">
-        <ul>
-            <li><a href="{% url 'documents:document_list' %}">Documents</a></li>
-            <li>Upload Document</li>
-        </ul>
-    </nav>
+<div class="container mx-auto">
     
     <div class="card bg-base-100 shadow max-w-3xl mx-auto">
         <div class="card-body">

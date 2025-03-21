@@ -1,0 +1,60 @@
+<header class="sticky top-0 z-30 bg-base-100 border-b border-base-200">
+    <div class="navbar gap-2">
+        <!-- Mobile menu button -->
+        <div class="flex-none lg:hidden">
+            <label for="drawer-toggle" class="btn btn-square btn-ghost">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </label>
+        </div>
+        
+        <!-- App title -->
+        <div class="flex-1">
+            <a href="/" class="text-lg font-bold">Daedalus Legal Tech</a>
+        </div>
+        
+        <!-- Right side navbar items -->
+        <div class="flex-none gap-2">
+            <!-- Theme switcher -->
+            <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                </div>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><button onclick="setTheme('light')">Light</button></li>
+                    <li><button onclick="setTheme('dark')">Dark</button></li>
+                    <li><button onclick="setTheme('corporate')">Corporate</button></li>
+                    <li><button onclick="setTheme('cupcake')">Cupcake</button></li>
+                    <li><button onclick="setTheme('emerald')">Emerald</button></li>
+                </ul>
+            </div>
+            
+            <!-- User menu -->
+            {% if request.user.is_authenticated %}
+            <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                    <div class="w-10 rounded-full">
+                        <div class="bg-primary text-primary-content grid place-items-center h-full w-full rounded-full">
+                            <span class="text-xl">{{ request.user.username|first|upper }}</span>
+                        </div>
+                    </div>
+                </div>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><a href="{% url 'profile' %}">Profile</a></li>
+                    <li>
+                        <form action="{% url 'logout' %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-ghost">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</header>

@@ -20,6 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
 from django.views.generic import TemplateView
+from .views import search_view
 
 def healthcheck(request):
     return JsonResponse({"status": "ok"})
@@ -38,6 +39,7 @@ admin.site.index_title = "Welcome to Daedalus Legal Tech Platform"
 urlpatterns = [
     path("", home, name="home"),
     path("test/", test_view, name="test"),
+    path("search/", search_view, name="search"),
     path("admin/", admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     

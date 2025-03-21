@@ -1,16 +1,17 @@
-{% extends "theme/base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}{{ document.title }}{% endblock %}
 
+{% block page_title %}{{ document.title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'documents:document_list' %}">Documents</a></li>
+<li>{{ document.title }}</li>
+{% endblock %}
+
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <nav class="text-sm breadcrumbs mb-6">
-        <ul>
-            <li><a href="{% url 'documents:document_list' %}">Documents</a></li>
-            <li>{{ document.title }}</li>
-        </ul>
-    </nav>
+<div class="container mx-auto">
     
     <div class="flex justify-between items-start mb-6">
         <div>

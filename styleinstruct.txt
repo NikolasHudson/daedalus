@@ -1,0 +1,504 @@
+Implementation Instructions for AI Developer
+Your task is to implement a cohesive DaisyUI-based design system for the Daedalus legal tech platform. This implementation will tie together all the existing apps (cases, clients, documents, docket) with a consistent UI. Follow these technical instructions to create the base templates first, then we'll move to individual app templates.
+Step 1: Create Base Layout Templates
+Start by creating the foundational templates in the following location:
+Copydaedlaus/templates/
+1.1 Create base.html
+This is your main template that all other templates will extend:
+htmlCopy{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Daedalus Legal Tech{% endblock %}</title>
+    <link href="{% static 'css/output.css' %}" rel="stylesheet" type="text/css" />
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen bg-base-200">
+    <div class="drawer lg:drawer-open">
+        <input id="drawer-toggle" type="checkbox" class="drawer-toggle" />
+        
+        <!-- Page content -->
+        <div class="drawer-content flex flex-col">
+            {% include 'partials/header.html' %}
+            
+            <!-- Page header with breadcrumbs -->
+            <div class="bg-base-100 py-3 px-4 border-b border-base-300">
+                <div class="flex flex-col sm:flex-row justify-between items-center">
+                    <h1 class="text-xl font-bold">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <div class="text-sm breadcrumbs">
+                        <ul>
+                            <li><a href="{% url 'home' %}">Home</a></li>
+                            {% block breadcrumbs %}{% endblock %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main content area -->
+            <main class="flex-1 p-4 overflow-y-auto">
+                {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}">
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+            
+            {% include 'partials/footer.html' %}
+        </div>
+        
+        <!-- Sidebar -->
+        {% include 'partials/sidebar.html' %}
+    </div>
+    
+    <!-- Theme switching script -->
+    <script>
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('daedalus-theme', theme);
+        }
+
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('daedalus-theme') || 'corporate';
+            setTheme(savedTheme);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+1.2 Create Partials Directory
+Create a directory for partial templates:
+Copydaedlaus/templates/partials/
+1.3 Create sidebar.html
+The sidebar is crucial for navigation between different modules:
+htmlCopy{% load static %}
+<div class="drawer-side z-20">
+    <label for="drawer-toggle" class="drawer-overlay"></label>
+    <aside class="bg-base-300 w-64 h-screen">
+        <!-- App logo and name -->
+        <div class="p-4 flex items-center border-b border-base-content/10">
+            <img src="{% static 'img/logo.svg' %}" alt="Daedalus Logo" class="w-8 h-8">
+            <span class="text-xl font-bold ml-2">Daedalus</span>
+        </div>
+        
+        <!-- Navigation -->
+        <ul class="menu menu-md p-2 gap-2">
+            <!-- Dashboard -->
+            <li>
+                <a href="{% url 'home' %}" class="{% if active_page == 'home' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Dashboard
+                </a>
+            </li>
+            
+            <!-- Cases section -->
+            <li class="menu-title">
+                <span>Cases</span>
+            </li>
+            <li>
+                <a href="{% url 'cases:case_list' %}" class="{% if active_page == 'cases' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    All Cases
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'cases:case_create' %}" class="{% if active_page == 'case_create' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    New Case
+                </a>
+            </li>
+            
+            <!-- Clients section -->
+            <li class="menu-title mt-4">
+                <span>Clients</span>
+            </li>
+            <li>
+                <a href="{% url 'clients:client_list' %}" class="{% if active_page == 'clients' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    All Clients
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'clients:client_create' %}" class="{% if active_page == 'client_create' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    New Client
+                </a>
+            </li>
+            
+            <!-- Documents section -->
+            <li class="menu-title mt-4">
+                <span>Documents</span>
+            </li>
+            <li>
+                <a href="{% url 'documents:document_list' %}" class="{% if active_page == 'documents' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    All Documents
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'documents:document_upload' %}" class="{% if active_page == 'document_upload' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Upload Document
+                </a>
+            </li>
+            
+            <!-- Docket section -->
+            <li class="menu-title mt-4">
+                <span>Court Records</span>
+            </li>
+            <li>
+                <a href="{% url 'docket:court_list' %}" class="{% if active_page == 'courts' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Courts
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'docket:docket_list' %}" class="{% if active_page == 'dockets' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Dockets
+                </a>
+            </li>
+            
+            <!-- AWS Configuration - Only for staff -->
+            {% if user.is_staff %}
+            <li class="menu-title mt-4">
+                <span>Admin</span>
+            </li>
+            <li>
+                <a href="{% url 'admin:index' %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Django Admin
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin:aws_s3configuration_changelist' %}" class="{% if active_page == 's3config' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    S3 Configuration
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin:aws_bedrockconfiguration_changelist' %}" class="{% if active_page == 'bedrockconfig' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Bedrock Configuration
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </aside>
+</div>
+1.4 Create header.html
+The header includes search functionality and user controls:
+htmlCopy<header class="sticky top-0 z-30 bg-base-100 border-b border-base-200">
+    <div class="navbar gap-2">
+        <!-- Mobile menu button -->
+        <div class="flex-none lg:hidden">
+            <label for="drawer-toggle" class="btn btn-square btn-ghost">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </label>
+        </div>
+        
+        <!-- Search bar -->
+        <div class="flex-1">
+            <form method="GET" action="{% url 'search' %}" class="form-control">
+                <div class="input-group w-full max-w-md">
+                    <select name="type" class="select select-bordered select-sm">
+                        <option value="all">All</option>
+                        <option value="cases">Cases</option>
+                        <option value="clients">Clients</option>
+                        <option value="documents">Documents</option>
+                        <option value="dockets">Dockets</option>
+                    </select>
+                    <input type="text" name="q" placeholder="Search..." class="input input-bordered w-full" />
+                    <button type="submit" class="btn btn-square">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Right side navbar items -->
+        <div class="flex-none gap-2">
+            <!-- Theme switcher -->
+            <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                </div>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><button onclick="setTheme('light')">Light</button></li>
+                    <li><button onclick="setTheme('dark')">Dark</button></li>
+                    <li><button onclick="setTheme('corporate')">Corporate</button></li>
+                    <li><button onclick="setTheme('business')">Business</button></li>
+                    <li><button onclick="setTheme('professional')">Professional</button></li>
+                </ul>
+            </div>
+            
+            <!-- Notifications -->
+            <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                    <div class="indicator">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span class="badge badge-xs badge-primary indicator-item"></span>
+                    </div>
+                </div>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-64">
+                    <li class="menu-title">Notifications</li>
+                    <li><a>No new notifications</a></li>
+                </ul>
+            </div>
+            
+            <!-- User menu -->
+            <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                    <div class="w-10 rounded-full">
+                        {% if user.profile_image %}
+                            <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" />
+                        {% else %}
+                            <div class="bg-primary text-primary-content grid place-items-center h-full w-full rounded-full">
+                                <span class="text-xl">{{ user.username|first|upper }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><a href="{% url 'users:profile' %}">Profile</a></li>
+                    <li><a href="{% url 'users:settings' %}">Settings</a></li>
+                    <li><form action="{% url 'logout' %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit">Logout</button>
+                    </form></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>
+1.5 Create footer.html
+Simple footer for the application:
+htmlCopy<footer class="footer footer-center p-4 bg-base-100 text-base-content border-t border-base-200">
+    <div>
+        <p>&copy; {% now 'Y' %} Daedalus Legal Tech. All rights reserved.</p>
+    </div>
+</footer>
+Step 2: Create Search Functionality
+You'll need a basic search view to handle the search bar. Create a new file daedlaus/views.py:
+pythonCopyfrom django.shortcuts import render
+from django.db.models import Q
+from cases.models import Case
+from clients.models import Client
+from documents.models import Document
+from docket.models import Docket, Court
+
+def search_view(request):
+    """
+    Universal search view that searches across all modules
+    """
+    query = request.GET.get('q', '')
+    search_type = request.GET.get('type', 'all')
+    
+    results = {
+        'cases': [],
+        'clients': [],
+        'documents': [],
+        'dockets': [],
+    }
+    
+    if query:
+        # Search cases
+        if search_type in ['all', 'cases']:
+            results['cases'] = Case.objects.filter(
+                Q(title__icontains=query) | 
+                Q(case_number__icontains=query) |
+                Q(description__icontains=query)
+            )[:10]
+        
+        # Search clients
+        if search_type in ['all', 'clients']:
+            results['clients'] = Client.objects.filter(
+                Q(name__icontains=query) | 
+                Q(email__icontains=query) |
+                Q(phone__icontains=query)
+            )[:10]
+        
+        # Search documents
+        if search_type in ['all', 'documents']:
+            results['documents'] = Document.objects.filter(
+                Q(title__icontains=query) | 
+                Q(description__icontains=query) |
+                Q(tags__icontains=query)
+            )[:10]
+        
+        # Search dockets
+        if search_type in ['all', 'dockets']:
+            results['dockets'] = Docket.objects.filter(
+                Q(case_name__icontains=query) | 
+                Q(docket_number__icontains=query) |
+                Q(assigned_to__icontains=query)
+            )[:10]
+    
+    return render(request, 'search_results.html', {
+        'query': query,
+        'search_type': search_type,
+        'results': results,
+        'active_page': 'search'
+    })
+Update your daedlaus/urls.py to include the search view:
+pythonCopy# Add this to your existing imports
+from . import views
+
+# Add this to your urlpatterns
+path('search/', views.search_view, name='search'),
+Create the search results template at daedlaus/templates/search_results.html:
+htmlCopy{% extends 'base.html' %}
+
+{% block title %}Search Results | Daedalus{% endblock %}
+
+{% block page_title %}Search Results{% endblock %}
+
+{% block breadcrumbs %}
+<li>Search Results</li>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-4">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Search Results for "{{ query }}"</h2>
+            <p>Showing results for: {{ search_type }}</p>
+            
+            <!-- Search form for refining search -->
+            <form method="GET" action="{% url 'search' %}" class="mt-4">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <select name="type" class="select select-bordered w-full sm:w-auto">
+                        <option value="all" {% if search_type == 'all' %}selected{% endif %}>All</option>
+                        <option value="cases" {% if search_type == 'cases' %}selected{% endif %}>Cases</option>
+                        <option value="clients" {% if search_type == 'clients' %}selected{% endif %}>Clients</option>
+                        <option value="documents" {% if search_type == 'documents' %}selected{% endif %}>Documents</option>
+                        <option value="dockets" {% if search_type == 'dockets' %}selected{% endif %}>Dockets</option>
+                    </select>
+                    <input type="text" name="q" value="{{ query }}" class="input input-bordered w-full" />
+                    <button type="submit" class="btn btn-primary w-full sm:w-auto">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Results tabs -->
+    <div class="tabs">
+        <a class="tab tab-bordered {% if search_type == 'all' or search_type == 'cases' %}tab-active{% endif %}" 
+           href="#cases-tab">Cases ({{ results.cases|length }})</a>
+        <a class="tab tab-bordered {% if search_type == 'clients' %}tab-active{% endif %}" 
+           href="#clients-tab">Clients ({{ results.clients|length }})</a>
+        <a class="tab tab-bordered {% if search_type == 'documents' %}tab-active{% endif %}" 
+           href="#documents-tab">Documents ({{ results.documents|length }})</a>
+        <a class="tab tab-bordered {% if search_type == 'dockets' %}tab-active{% endif %}" 
+           href="#dockets-tab">Dockets ({{ results.dockets|length }})</a>
+    </div>
+    
+    <!-- Cases results -->
+    <div id="cases-tab" class="{% if search_type != 'all' and search_type != 'cases' %}hidden{% endif %}">
+        <h3 class="text-lg font-medium mb-2">Cases</h3>
+        {% if results.cases %}
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Case Number</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for case in results.cases %}
+                        <tr>
+                            <td>{{ case.title }}</td>
+                            <td>{{ case.case_number }}</td>
+                            <td>{{ case.get_status_display }}</td>
+                            <td>
+                                <a href="{% url 'cases:case_detail' case.uuid %}" class="btn btn-sm">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert">No cases found matching "{{ query }}"</div>
+        {% endif %}
+    </div>
+    
+    <!-- Add similar sections for clients, documents, and dockets -->
+    <!-- ... -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple tab navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.tabs .tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('href');
+                
+                // Hide all tab contents
+                document.querySelectorAll('[id$="-tab"]').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show selected tab content
+                document.querySelector(target).classList.remove('hidden');
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('tab-active'));
+                this.classList.add('tab-active');
+            });
+        });
+    });
+</script>
+{% endblock %}

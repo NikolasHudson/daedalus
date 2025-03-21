@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results | Daedalus{% endblock %}
+
+{% block page_title %}Search Results{% endblock %}
+
+{% block breadcrumbs %}
+<li>Search Results</li>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-4">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Search Results for "{{ query }}"</h2>
+            <p>Showing results for: {{ search_type }}</p>
+            
+            <!-- Search form for refining search -->
+            <form method="GET" action="{% url 'search' %}" class="mt-4">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <select name="type" class="select select-bordered w-full sm:w-auto">
+                        <option value="all" {% if search_type == 'all' %}selected{% endif %}>All</option>
+                        <option value="documents" {% if search_type == 'documents' %}selected{% endif %}>Documents</option>
+                    </select>
+                    <input type="text" name="q" value="{{ query }}" class="input input-bordered w-full" />
+                    <button type="submit" class="btn btn-primary w-full sm:w-auto">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Results tabs -->
+    <div class="tabs">
+        <a class="tab tab-bordered {% if search_type == 'all' or search_type == 'documents' %}tab-active{% endif %}" 
+           href="#documents-tab">Documents ({{ results.documents|length }})</a>
+    </div>
+    
+    <!-- Documents results -->
+    <div id="documents-tab" class="{% if search_type != 'all' and search_type != 'documents' %}hidden{% endif %}">
+        <h3 class="text-lg font-medium mb-2">Documents</h3>
+        {% if results.documents %}
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for document in results.documents %}
+                        <tr>
+                            <td>{{ document.title }}</td>
+                            <td>{{ document.category.name|default:"-" }}</td>
+                            <td>{{ document.get_status_display }}</td>
+                            <td>
+                                <a href="{% url 'documents:document_detail' document.uuid %}" class="btn btn-sm">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert">No documents found matching "{{ query }}"</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple tab navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.tabs .tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('href');
+                
+                // Hide all tab contents
+                document.querySelectorAll('[id$="-tab"]').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show selected tab content
+                document.querySelector(target).classList.remove('hidden');
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('tab-active'));
+                this.classList.add('tab-active');
+            });
+        });
+    });
+</script>
+{% endblock %}

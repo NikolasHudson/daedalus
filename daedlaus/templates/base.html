@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Daedalus Legal Tech{% endblock %}</title>
+    <link href="{% static 'css/output.css' %}" rel="stylesheet" type="text/css" />
+    <script src="{% static 'django_htmx/htmx.min.js' %}" defer></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen bg-base-200">
+    <div class="drawer lg:drawer-open">
+        <input id="drawer-toggle" type="checkbox" class="drawer-toggle" />
+        
+        <!-- Page content -->
+        <div class="drawer-content flex flex-col">
+            {% include 'partials/header.html' %}
+            
+            <!-- Page header with breadcrumbs -->
+            <div class="bg-base-100 py-3 px-4 border-b border-base-300">
+                <div class="flex flex-col sm:flex-row justify-between items-center">
+                    <h1 class="text-xl font-bold">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <div class="text-sm breadcrumbs">
+                        <ul>
+                            <li><a href="/">Home</a></li>
+                            {% block breadcrumbs %}{% endblock %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main content area -->
+            <main class="flex-1 p-4 overflow-y-auto">
+                {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}">
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+            
+            {% include 'partials/footer.html' %}
+        </div>
+        
+        <!-- Sidebar -->
+        {% include 'partials/sidebar.html' %}
+    </div>
+    
+    <!-- Theme switching script -->
+    <script>
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('daedalus-theme', theme);
+        }
+
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('daedalus-theme') || 'corporate';
+            setTheme(savedTheme);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

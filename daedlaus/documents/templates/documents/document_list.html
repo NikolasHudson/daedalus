@@ -1,7 +1,13 @@
-{% extends "theme/base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}{{ title }}{% endblock %}
+
+{% block page_title %}Documents{% endblock %}
+
+{% block breadcrumbs %}
+<li>Documents</li>
+{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
