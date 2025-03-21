@@ -11,13 +11,30 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-col gap-4">
+<div class="p-0 md:p-4">
+    <!-- Navigation/Breadcrumbs -->
+    <div class="mb-6">
+        <nav class="text-sm mb-2">
+            <ol class="flex items-center space-x-1">
+                <li>
+                    <a href="{% url 'documents:document_list' %}" class="text-blue-500 hover:text-blue-700">
+                        <i class="fas fa-home mr-1"></i>Documents
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-1 text-xs"></i>
+                    <span class="text-gray-600">{{ document.title }}</span>
+                </li>
+            </ol>
+        </nav>
+    </div>
+
     <!-- Document Header -->
-    <div class="card bg-base-100 shadow">
+    <div class="card bg-base-100 shadow-lg mb-6">
         <div class="card-body">
             <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                 <div>
-                    <h2 class="card-title mb-2">{{ document.title }}</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ document.title }}</h2>
                     <div class="flex flex-wrap items-center gap-2 text-sm">
                         <span class="badge 
                             {% if document.status == 'draft' %}badge-warning{% endif %}
@@ -40,18 +57,14 @@
                 <div class="flex gap-2">
                     {% if perms.documents.change_document %}
                     <a href="#" class="btn btn-outline" onclick="document.getElementById('version-upload-modal').showModal()">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
+                        <i class="fas fa-plus mr-2"></i>
                         Upload New Version
                     </a>
                     {% endif %}
                     
                     {% if document.current_version %}
                     <a href="{% url 'documents:document_download' document.uuid %}" class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
+                        <i class="fas fa-download mr-2"></i>
                         Download Latest
                     </a>
                     {% endif %}
@@ -60,23 +73,26 @@
         </div>
     </div>
     
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Document Details -->
-        <div class="lg:col-span-2 flex flex-col gap-4">
-            <div class="card bg-base-100 shadow">
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            <div class="card bg-base-100 shadow-md">
                 <div class="card-body">
-                    <h2 class="card-title">Details</h2>
+                    <h2 class="text-xl font-semibold flex items-center mb-4">
+                        <i class="fas fa-info-circle text-primary mr-2"></i>
+                        Document Details
+                    </h2>
                     
                     {% if document.description %}
-                    <div class="mb-4">
-                        <h3 class="font-medium mb-2">Description</h3>
-                        <p>{{ document.description }}</p>
+                    <div class="mb-6">
+                        <h3 class="font-medium mb-2 text-gray-700">Description</h3>
+                        <p class="text-gray-600 bg-base-200 p-3 rounded-lg">{{ document.description }}</p>
                     </div>
                     {% endif %}
                     
                     {% if document.get_tag_list %}
-                    <div class="mb-4">
-                        <h3 class="font-medium mb-2">Tags</h3>
+                    <div class="mb-6">
+                        <h3 class="font-medium mb-2 text-gray-700">Tags</h3>
                         <div class="flex flex-wrap gap-2">
                             {% for tag in document.get_tag_list %}
                             <span class="badge badge-outline">{{ tag }}</span>
@@ -85,30 +101,39 @@
                     </div>
                     {% endif %}
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h3 class="font-medium mb-2">Created By</h3>
-                            <p>{{ document.created_by.get_full_name|default:document.created_by.username }}</p>
-                            <p class="text-sm text-base-content/70">{{ document.created_at|date:"M d, Y H:i" }}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-base-200 p-4 rounded-lg">
+                            <h3 class="font-medium mb-2 text-gray-700 flex items-center">
+                                <i class="fas fa-user text-primary mr-2"></i>
+                                Created By
+                            </h3>
+                            <p class="font-semibold">{{ document.created_by.get_full_name|default:document.created_by.username }}</p>
+                            <p class="text-sm text-gray-500">{{ document.created_at|date:"M d, Y H:i" }}</p>
                         </div>
                         
-                        <div>
-                            <h3 class="font-medium mb-2">Last Updated By</h3>
-                            <p>{{ document.updated_by.get_full_name|default:document.updated_by.username }}</p>
-                            <p class="text-sm text-base-content/70">{{ document.updated_at|date:"M d, Y H:i" }}</p>
+                        <div class="bg-base-200 p-4 rounded-lg">
+                            <h3 class="font-medium mb-2 text-gray-700 flex items-center">
+                                <i class="fas fa-edit text-primary mr-2"></i>
+                                Last Updated By
+                            </h3>
+                            <p class="font-semibold">{{ document.updated_by.get_full_name|default:document.updated_by.username }}</p>
+                            <p class="text-sm text-gray-500">{{ document.updated_at|date:"M d, Y H:i" }}</p>
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- Version History -->
-            <div class="card bg-base-100 shadow">
+            <div class="card bg-base-100 shadow-md">
                 <div class="card-body">
-                    <h2 class="card-title">Version History</h2>
+                    <h2 class="text-xl font-semibold flex items-center mb-4">
+                        <i class="fas fa-history text-primary mr-2"></i>
+                        Version History
+                    </h2>
                     
                     {% if versions %}
                     <div class="overflow-x-auto">
-                        <table class="table w-full">
+                        <table class="table table-zebra w-full">
                             <thead>
                                 <tr>
                                     <th>Version</th>
@@ -121,30 +146,40 @@
                             <tbody>
                                 {% for version in versions %}
                                 <tr {% if document.current_version.id == version.id %}class="bg-base-200"{% endif %}>
-                                    <td>{{ version.version_number }}</td>
                                     <td>
-                                        <div>
-                                            {{ version.file_name }}
+                                        <span class="font-semibold">{{ version.version_number }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center">
+                                            <div class="avatar mr-3">
+                                                <div class="mask mask-squircle w-8 h-8 bg-blue-100 flex items-center justify-center">
+                                                    <i class="fas fa-file-pdf text-blue-500"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="font-bold">{{ version.file_name }}</div>
+                                                <div class="text-xs opacity-50">{{ version.file_size|filesizeformat }}</div>
+                                            </div>
                                             {% if document.current_version.id == version.id %}
                                             <span class="badge badge-sm badge-primary ml-2">Latest</span>
                                             {% endif %}
-                                        </div>
-                                        <div class="text-xs text-base-content/70">
-                                            {{ version.file_size|filesizeformat }}
                                         </div>
                                     </td>
                                     <td>{{ version.uploaded_by.get_full_name|default:version.uploaded_by.username }}</td>
                                     <td>{{ version.uploaded_at|date:"M d, Y H:i" }}</td>
                                     <td>
                                         <a href="{% url 'documents:document_download_version' document.uuid version.version_number %}" class="btn btn-sm btn-outline">
-                                            Download
+                                            <i class="fas fa-download mr-1"></i> Download
                                         </a>
                                     </td>
                                 </tr>
                                 {% if version.notes %}
                                 <tr>
-                                    <td colspan="5" class="bg-base-200 text-sm">
-                                        <strong>Notes:</strong> {{ version.notes }}
+                                    <td colspan="5" class="bg-base-200 text-sm px-4 py-2">
+                                        <div class="flex items-start">
+                                            <i class="fas fa-sticky-note text-yellow-500 mt-1 mr-2"></i>
+                                            <div><strong>Notes:</strong> {{ version.notes }}</div>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endif %}
@@ -154,7 +189,7 @@
                     </div>
                     {% else %}
                     <div class="alert alert-warning">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
                         <span>No versions available for this document.</span>
                     </div>
                     {% endif %}
@@ -163,22 +198,23 @@
         </div>
         
         <!-- Sidebar -->
-        <div class="lg:col-span-1 flex flex-col gap-4">
+        <div class="lg:col-span-1 flex flex-col gap-6">
             {% if document.is_private %}
-            <div class="card bg-base-100 shadow">
+            <div class="card bg-base-100 shadow-md">
                 <div class="card-body">
-                    <h2 class="card-title">Access Control</h2>
+                    <h2 class="text-xl font-semibold flex items-center mb-4">
+                        <i class="fas fa-lock text-primary mr-2"></i>
+                        Access Control
+                    </h2>
                     
                     <div class="alert alert-info mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <i class="fas fa-info-circle mr-2"></i>
                         <span>This document is private and requires explicit access permission.</span>
                     </div>
                     
                     {% if perms.documents.share_document %}
                     <button class="btn btn-outline btn-block">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                        </svg>
+                        <i class="fas fa-share-alt mr-2"></i>
                         Manage Access
                     </button>
                     {% endif %}
@@ -186,36 +222,93 @@
             </div>
             {% endif %}
             
-            <!-- Metadata -->
-            <div class="card bg-base-100 shadow">
+            <!-- Document Actions -->
+            <div class="card bg-base-100 shadow-md mb-6">
                 <div class="card-body">
-                    <h2 class="card-title">Metadata</h2>
+                    <h2 class="text-xl font-semibold flex items-center mb-4">
+                        <i class="fas fa-cog text-primary mr-2"></i>
+                        Actions
+                    </h2>
                     
-                    <ul class="text-sm">
-                        <li class="mb-2">
-                            <strong>UUID:</strong> {{ document.uuid }}
+                    <div class="flex flex-col gap-3">
+                        {% if perms.documents.change_document %}
+                        <button class="btn btn-outline btn-block justify-start" onclick="document.getElementById('version-upload-modal').showModal()">
+                            <i class="fas fa-file-upload mr-2"></i>
+                            Upload New Version
+                        </button>
+                        {% endif %}
+                        
+                        {% if document.current_version %}
+                        <a href="{% url 'documents:document_download' document.uuid %}" class="btn btn-outline btn-block justify-start">
+                            <i class="fas fa-download mr-2"></i>
+                            Download Latest
+                        </a>
+                        {% endif %}
+                        
+                        {% if perms.documents.change_document %}
+                        <a href="#" class="btn btn-outline btn-block justify-start">
+                            <i class="fas fa-edit mr-2"></i>
+                            Edit Details
+                        </a>
+                        {% endif %}
+                        
+                        <a href="#" class="btn btn-outline btn-block justify-start">
+                            <i class="fas fa-share-alt mr-2"></i>
+                            Share Document
+                        </a>
+                        
+                        {% if perms.documents.delete_document %}
+                        <a href="#" class="btn btn-outline btn-error btn-block justify-start">
+                            <i class="fas fa-trash-alt mr-2"></i>
+                            Delete Document
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Metadata -->
+            <div class="card bg-base-100 shadow-md">
+                <div class="card-body">
+                    <h2 class="text-xl font-semibold flex items-center mb-4">
+                        <i class="fas fa-tags text-primary mr-2"></i>
+                        Metadata
+                    </h2>
+                    
+                    <ul class="text-sm space-y-3">
+                        <li class="flex items-start">
+                            <div class="w-28 text-gray-500">UUID:</div>
+                            <div class="font-mono bg-base-200 px-2 py-1 rounded flex-1 text-xs">{{ document.uuid }}</div>
                         </li>
                         {% if document.current_version %}
-                        <li class="mb-2">
-                            <strong>File Type:</strong> {{ document.current_version.file_type|default:document.file_extension|upper }}
+                        <li class="flex items-start">
+                            <div class="w-28 text-gray-500">File Type:</div>
+                            <div class="font-semibold">{{ document.current_version.file_type|default:document.file_extension|upper }}</div>
                         </li>
-                        <li class="mb-2">
-                            <strong>Size:</strong> {{ document.current_version.file_size|filesizeformat }}
+                        <li class="flex items-start">
+                            <div class="w-28 text-gray-500">Size:</div>
+                            <div class="font-semibold">{{ document.current_version.file_size|filesizeformat }}</div>
                         </li>
                         {% endif %}
-                        <li class="mb-2">
-                            <strong>Created:</strong> {{ document.created_at|date:"M d, Y H:i" }}
+                        <li class="flex items-start">
+                            <div class="w-28 text-gray-500">Created:</div>
+                            <div class="font-semibold">{{ document.created_at|date:"M d, Y" }}</div>
                         </li>
-                        <li class="mb-2">
-                            <strong>Last Updated:</strong> {{ document.updated_at|date:"M d, Y H:i" }}
+                        <li class="flex items-start">
+                            <div class="w-28 text-gray-500">Last Updated:</div>
+                            <div class="font-semibold">{{ document.updated_at|date:"M d, Y" }}</div>
                         </li>
-                        <li class="mb-2">
-                            <strong>Storage:</strong> 
-                            {% if document.current_version.s3_key %}
-                            AWS S3
-                            {% else %}
-                            Local Storage
-                            {% endif %}
+                        <li class="flex items-start">
+                            <div class="w-28 text-gray-500">Storage:</div>
+                            <div class="flex items-center">
+                                {% if document.current_version.s3_key %}
+                                <i class="fas fa-cloud text-blue-500 mr-2"></i>
+                                <span class="font-semibold">AWS S3</span>
+                                {% else %}
+                                <i class="fas fa-hdd text-gray-500 mr-2"></i>
+                                <span class="font-semibold">Local Storage</span>
+                                {% endif %}
+                            </div>
                         </li>
                     </ul>
                 </div>
@@ -227,28 +320,46 @@
 <!-- Upload New Version Modal -->
 <dialog id="version-upload-modal" class="modal">
     <div class="modal-box">
-        <h3 class="font-bold text-lg">Upload New Version</h3>
+        <div class="flex items-center mb-4">
+            <i class="fas fa-file-upload text-primary text-2xl mr-3"></i>
+            <h3 class="font-bold text-lg">Upload New Version</h3>
+        </div>
+        
+        <p class="text-sm text-gray-600 mb-4">
+            Upload a new version of this document. The previous versions will remain accessible in the version history.
+        </p>
+        
         <form method="post" action="{% url 'documents:document_upload' %}" enctype="multipart/form-data" class="mt-4">
             {% csrf_token %}
             <input type="hidden" name="document_id" value="{{ document.id }}">
             
             <div class="form-control mb-4">
                 <label class="label">
-                    <span class="label-text">File</span>
+                    <span class="label-text font-medium">Document File</span>
                 </label>
                 <input type="file" name="file" required class="file-input file-input-bordered w-full">
-            </div>
-            
-            <div class="form-control mb-4">
                 <label class="label">
-                    <span class="label-text">Version Notes</span>
+                    <span class="label-text-alt text-gray-500">Maximum file size: 50MB</span>
                 </label>
-                <textarea name="notes" class="textarea textarea-bordered" placeholder="Describe the changes in this version"></textarea>
             </div>
             
-            <div class="modal-action">
-                <button type="submit" class="btn btn-primary">Upload</button>
-                <button type="button" class="btn" onclick="document.getElementById('version-upload-modal').close()">Cancel</button>
+            <div class="form-control mb-6">
+                <label class="label">
+                    <span class="label-text font-medium">Version Notes</span>
+                    <span class="label-text-alt text-gray-500">Recommended</span>
+                </label>
+                <textarea name="notes" class="textarea textarea-bordered" placeholder="Describe the changes in this version (e.g., 'Added client signature section', 'Fixed formatting issues')"></textarea>
+                <label class="label">
+                    <span class="label-text-alt text-gray-500">These notes will be visible in the version history</span>
+                </label>
+            </div>
+            
+            <div class="modal-action flex justify-between">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('version-upload-modal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload mr-2"></i>
+                    Upload Version
+                </button>
             </div>
         </form>
     </div>
