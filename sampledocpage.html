@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Management | CaseFlow</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/daisyui/3.9.4/full.css" rel="stylesheet" type="text/css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .document-card:hover {
+      transform: translateY(-2px);
+      transition: transform 0.2s ease;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="drawer lg:drawer-open">
+    <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
+    <div class="drawer-content flex flex-col">
+      <!-- Top Navigation -->
+      <div class="navbar bg-base-100 shadow-md">
+        <div class="flex-none lg:hidden">
+          <label for="my-drawer-2" class="btn btn-square btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </label>
+        </div>
+        <div class="flex-1 px-2 mx-2 text-primary font-bold text-xl">CaseFlow</div>
+        <div class="flex-none">
+          <div class="dropdown dropdown-end">
+            <button class="btn btn-ghost btn-circle">
+              <div class="indicator">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                <span class="badge badge-xs badge-primary indicator-item">3</span>
+              </div>
+            </button>
+          </div>
+          <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+              <div class="w-10 rounded-full">
+                <img src="/api/placeholder/40/40" alt="User avatar" />
+              </div>
+            </label>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+              <li><a>Profile</a></li>
+              <li><a>Settings</a></li>
+              <li><a>Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Page Content -->
+      <div class="p-4 md:p-6">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800">Documents</h1>
+            <p class="text-sm text-gray-600">Manage all case-related documents</p>
+          </div>
+          <div class="flex gap-2">
+            <div class="dropdown dropdown-end">
+              <label tabindex="0" class="btn btn-outline btn-sm">
+                <i class="fas fa-filter mr-2"></i> Filter
+              </label>
+              <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                <li><a>All Documents</a></li>
+                <li><a>Recent Uploads</a></li>
+                <li><a>Shared with Me</a></li>
+                <li><a>Archived</a></li>
+              </ul>
+            </div>
+            <button class="btn btn-primary btn-sm">
+              <i class="fas fa-upload mr-2"></i> Upload
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="form-control mb-6">
+          <div class="input-group">
+            <input type="text" placeholder="Search documents by name, case, or content..." class="input input-bordered w-full" />
+            <button class="btn btn-square">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Access Section -->
+        <div class="mb-8">
+          <h2 class="text-lg font-semibold mb-4">Quick Access</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div class="stat bg-base-100 shadow rounded-lg p-4">
+              <div class="stat-figure text-primary">
+                <i class="fas fa-clock text-3xl"></i>
+              </div>
+              <div class="stat-title">Recent</div>
+              <div class="stat-value text-primary text-2xl">12</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-lg p-4">
+              <div class="stat-figure text-secondary">
+                <i class="fas fa-star text-3xl"></i>
+              </div>
+              <div class="stat-title">Favorites</div>
+              <div class="stat-value text-secondary text-2xl">7</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-lg p-4">
+              <div class="stat-figure text-accent">
+                <i class="fas fa-share-alt text-3xl"></i>
+              </div>
+              <div class="stat-title">Shared</div>
+              <div class="stat-value text-accent text-2xl">23</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-lg p-4">
+              <div class="stat-figure text-info">
+                <i class="fas fa-pen-to-square text-3xl"></i>
+              </div>
+              <div class="stat-title">Drafts</div>
+              <div class="stat-value text-info text-2xl">5</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-lg p-4">
+              <div class="stat-figure text-warning">
+                <i class="fas fa-archive text-3xl"></i>
+              </div>
+              <div class="stat-title">Archived</div>
+              <div class="stat-value text-warning text-2xl">18</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs mb-4">
+          <a class="tab tab-bordered tab-active">All Documents</a>
+          <a class="tab tab-bordered">Case Files</a>
+          <a class="tab tab-bordered">Templates</a>
+          <a class="tab tab-bordered">Signed Documents</a>
+        </div>
+
+        <!-- Documents Table -->
+        <div class="overflow-x-auto bg-base-100 shadow rounded-lg">
+          <table class="table table-zebra w-full">
+            <!-- head -->
+            <thead>
+              <tr>
+                <th>
+                  <label>
+                    <input type="checkbox" class="checkbox" />
+                  </label>
+                </th>
+                <th>Name</th>
+                <th>Case</th>
+                <th>Type</th>
+                <th>Uploaded</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- row 1 -->
+              <tr>
+                <th>
+                  <label>
+                    <input type="checkbox" class="checkbox" />
+                  </label>
+                </th>
+                <td>
+                  <div class="flex items-center space-x-3">
+                    <div class="avatar">
+                      <div class="mask mask-squircle w-10 h-10 bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-file-pdf text-blue-500"></i>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-bold">Police Report.pdf</div>
+                      <div class="text-sm opacity-50">1.3 MB</div>
+                    </div>
+                  </div>
+                </td>
+                <td>Smith vs. Anderson</td>
+                <td>Police Report</td>
+                <td>Mar 18, 2025</td>
+                <td><div class="badge badge-success">Verified</div></td>
+                <td>
+                  <div class="dropdown dropdown-left">
+                    <label tabindex="0" class="btn btn-ghost btn-xs">
+                      <i class="fas fa-ellipsis-vertical"></i>
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                      <li><a><i class="fas fa-eye mr-2"></i>View</a></li>
+                      <li><a><i class="fas fa-download mr-2"></i>Download</a></li>
+                      <li><a><i class="fas fa-share mr-2"></i>Share</a></li>
+                      <li><a><i class="fas fa-trash mr-2"></i>Delete</a></li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              <!-- row 2 -->
+              <tr>
+                <th>
+                  <label>
+                    <input type="checkbox" class="checkbox" />
+                  </label>
+                </th>
+                <td>
+                  <div class="flex items-center space-x-3">
+                    <div class="avatar">
+                      <div class="mask mask-squircle w-10 h-10 bg-green-100 flex items-center justify-center">
+                        <i class="fas fa-file-word text-green-500"></i>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-bold">Witness Statement.docx</div>
+                      <div class="text-sm opacity-50">280 KB</div>
+                    </div>
+                  </div>
+                </td>
+                <td>Johnson Inheritance</td>
+                <td>Statement</td>
+                <td>Mar 15, 2025</td>
+                <td><div class="badge badge-warning">Pending Review</div></td>
+                <td>
+                  <div class="dropdown dropdown-left">
+                    <label tabindex="0" class="btn btn-ghost btn-xs">
+                      <i class="fas fa-ellipsis-vertical"></i>
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                      <li><a><i class="fas fa-eye mr-2"></i>View</a></li>
+                      <li><a><i class="fas fa-download mr-2"></i>Download</a></li>
+                      <li><a><i class="fas fa-share mr-2"></i>Share</a></li>
+                      <li><a><i class="fas fa-trash mr-2"></i>Delete</a></li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              <!-- row 3 -->
+              <tr>
+                <th>
+                  <label>
+                    <input type="checkbox" class="checkbox" />
+                  </label>
+                </th>
+                <td>
+                  <div class="flex items-center space-x-3">
+                    <div class="avatar">
+                      <div class="mask mask-squircle w-10 h-10 bg-yellow-100 flex items-center justify-center">
+                        <i class="fas fa-file-excel text-yellow-500"></i>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-bold">Financial Analysis.xlsx</div>
+                      <div class="text-sm opacity-50">845 KB</div>
+                    </div>
+                  </div>
+                </td>
+                <td>Corporate Merger</td>
+                <td>Financial</td>
+                <td>Mar 12, 2025</td>
+                <td><div class="badge badge-info">Updated</div></td>
+                <td>
+                  <div class="dropdown dropdown-left">
+                    <label tabindex="0" class="btn btn-ghost btn-xs">
+                      <i class="fas fa-ellipsis-vertical"></i>
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                      <li><a><i class="fas fa-eye mr-2"></i>View</a></li>
+                      <li><a><i class="fas fa-download mr-2"></i>Download</a></li>
+                      <li><a><i class="fas fa-share mr-2"></i>Share</a></li>
+                      <li><a><i class="fas fa-trash mr-2"></i>Delete</a></li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              <!-- row 4 -->
+              <tr>
+                <th>
+                  <label>
+                    <input type="checkbox" class="checkbox" />
+                  </label>
+                </th>
+                <td>
+                  <div class="flex items-center space-x-3">
+                    <div class="avatar">
+                      <div class="mask mask-squircle w-10 h-10 bg-red-100 flex items-center justify-center">
+                        <i class="fas fa-file-image text-red-500"></i>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-bold">Accident Scene Photos.zip</div>
+                      <div class="text-sm opacity-50">5.7 MB</div>
+                    </div>
+                  </div>
+                </td>
+                <td>Rodriguez Car Accident</td>
+                <td>Photo Collection</td>
+                <td>Mar 10, 2025</td>
+                <td><div class="badge badge-secondary">Confidential</div></td>
+                <td>
+                  <div class="dropdown dropdown-left">
+                    <label tabindex="0" class="btn btn-ghost btn-xs">
+                      <i class="fas fa-ellipsis-vertical"></i>
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                      <li><a><i class="fas fa-eye mr-2"></i>View</a></li>
+                      <li><a><i class="fas fa-download mr-2"></i>Download</a></li>
+                      <li><a><i class="fas fa-share mr-2"></i>Share</a></li>
+                      <li><a><i class="fas fa-trash mr-2"></i>Delete</a></li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              <!-- row 5 -->
+              <tr>
+                <th>
+                  <label>
+                    <input type="checkbox" class="checkbox" />
+                  </label>
+                </th>
+                <td>
+                  <div class="flex items-center space-x-3">
+                    <div class="avatar">
+                      <div class="mask mask-squircle w-10 h-10 bg-purple-100 flex items-center justify-center">
+                        <i class="fas fa-file-signature text-purple-500"></i>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-bold">Settlement Agreement.pdf</div>
+                      <div class="text-sm opacity-50">420 KB</div>
+                    </div>
+                  </div>
+                </td>
+                <td>Martinez Dispute</td>
+                <td>Legal Contract</td>
+                <td>Mar 5, 2025</td>
+                <td><div class="badge badge-error">Needs Signature</div></td>
+                <td>
+                  <div class="dropdown dropdown-left">
+                    <label tabindex="0" class="btn btn-ghost btn-xs">
+                      <i class="fas fa-ellipsis-vertical"></i>
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                      <li><a><i class="fas fa-eye mr-2"></i>View</a></li>
+                      <li><a><i class="fas fa-download mr-2"></i>Download</a></li>
+                      <li><a><i class="fas fa-share mr-2"></i>Share</a></li>
+                      <li><a><i class="fas fa-trash mr-2"></i>Delete</a></li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-between items-center mt-4">
+          <div class="text-sm text-gray-600">Showing 1-5 of 42 documents</div>
+          <div class="btn-group">
+            <button class="btn btn-sm">«</button>
+            <button class="btn btn-sm btn-active">1</button>
+            <button class="btn btn-sm">2</button>
+            <button class="btn btn-sm">3</button>
+            <button class="btn btn-sm">4</button>
+            <button class="btn btn-sm">»</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Preview Modal -->
+      <input type="checkbox" id="document-preview-modal" class="modal-toggle" />
+      <div class="modal">
+        <div class="modal-box w-11/12 max-w-5xl">
+          <h3 class="font-bold text-lg">Police Report.pdf</h3>
+          <div class="py-4">
+            <div class="bg-gray-200 h-96 flex items-center justify-center">
+              <p class="text-gray-500">Document preview would appear here</p>
+            </div>
+          </div>
+          <div class="modal-action">
+            <label for="document-preview-modal" class="btn">Close</label>
+            <button class="btn btn-primary">Download</button>
+            <button class="btn btn-outline">Share</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="drawer-side">
+      <label for="my-drawer-2" class="drawer-overlay"></label> 
+      <ul class="menu p-4 w-64 h-full bg-base-200 text-base-content">
+        <div class="mb-6">
+          <div class="flex items-center mb-4">
+            <div class="avatar mr-3">
+              <div class="w-10 rounded-full">
+                <img src="/api/placeholder/40/40" alt="User avatar" />
+              </div>
+            </div>
+            <div>
+              <div class="font-bold">Jane Doe</div>
+              <div class="text-xs opacity-50">Case Manager</div>
+            </div>
+          </div>
+          <div class="divider mt-0 mb-4"></div>
+        </div>
+        <li>
+          <a href="#" class="flex items-center">
+            <i class="fas fa-home w-5"></i>
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center">
+            <i class="fas fa-briefcase w-5"></i>
+            Cases
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center active">
+            <i class="fas fa-file w-5"></i>
+            Documents
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center">
+            <i class="fas fa-calendar w-5"></i>
+            Calendar
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center">
+            <i class="fas fa-users w-5"></i>
+            Clients
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center">
+            <i class="fas fa-chart-bar w-5"></i>
+            Reports
+          </a>
+        </li>
+        <li>
+          <details>
+            <summary>
+              <i class="fas fa-folder w-5"></i>
+              Document Categories
+            </summary>
+            <ul>
+              <li><a>Legal Contracts</a></li>
+              <li><a>Court Filings</a></li>
+              <li><a>Police Reports</a></li>
+              <li><a>Medical Records</a></li>
+              <li><a>Financial Documents</a></li>
+              <li><a>Correspondences</a></li>
+              <li><a>Evidence</a></li>
+            </ul>
+          </details>
+        </li>
+        <div class="divider"></div>
+        <li>
+          <a href="#" class="flex items-center">
+            <i class="fas fa-gear w-5"></i>
+            Settings
+          </a>
+        </li>
+        <li>
+          <a href="#" class="flex items-center">
+            <i class="fas fa-circle-question w-5"></i>
+            Help & Support
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    // This would contain your JavaScript functionality
+    // For a real application, you'd implement document preview, filtering, etc.
+  </script>
+</body>
+</html>

@@ -11,54 +11,58 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto">
-    
-    <div class="flex justify-between items-start mb-6">
-        <div>
-            <h1 class="text-2xl font-bold mb-2">{{ document.title }}</h1>
-            <div class="flex items-center gap-4 text-sm">
-                <span class="badge 
-                    {% if document.status == 'draft' %}badge-warning{% endif %}
-                    {% if document.status == 'under_review' %}badge-info{% endif %}
-                    {% if document.status == 'approved' %}badge-success{% endif %}
-                    {% if document.status == 'archived' %}badge-neutral{% endif %}">
-                    {{ document.get_status_display }}
-                </span>
-                {% if document.is_private %}
-                <span class="badge badge-secondary">Private</span>
-                {% else %}
-                <span class="badge badge-outline">Public</span>
-                {% endif %}
-                {% if document.category %}
-                <span class="badge badge-outline">{{ document.category.name }}</span>
-                {% endif %}
+<div class="flex flex-col gap-4">
+    <!-- Document Header -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+                <div>
+                    <h2 class="card-title mb-2">{{ document.title }}</h2>
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                        <span class="badge 
+                            {% if document.status == 'draft' %}badge-warning{% endif %}
+                            {% if document.status == 'under_review' %}badge-info{% endif %}
+                            {% if document.status == 'approved' %}badge-success{% endif %}
+                            {% if document.status == 'archived' %}badge-neutral{% endif %}">
+                            {{ document.get_status_display }}
+                        </span>
+                        {% if document.is_private %}
+                        <span class="badge badge-secondary">Private</span>
+                        {% else %}
+                        <span class="badge badge-outline">Public</span>
+                        {% endif %}
+                        {% if document.category %}
+                        <span class="badge badge-outline">{{ document.category.name }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="flex gap-2">
+                    {% if perms.documents.change_document %}
+                    <a href="#" class="btn btn-outline" onclick="document.getElementById('version-upload-modal').showModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Upload New Version
+                    </a>
+                    {% endif %}
+                    
+                    {% if document.current_version %}
+                    <a href="{% url 'documents:document_download' document.uuid %}" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download Latest
+                    </a>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-        
-        <div class="flex gap-2">
-            {% if perms.documents.change_document %}
-            <a href="#" class="btn btn-outline" onclick="document.getElementById('version-upload-modal').showModal()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Upload New Version
-            </a>
-            {% endif %}
-            
-            {% if document.current_version %}
-            <a href="{% url 'documents:document_download' document.uuid %}" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download Latest
-            </a>
-            {% endif %}
         </div>
     </div>
     
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Document Details -->
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-2 flex flex-col gap-4">
             <div class="card bg-base-100 shadow">
                 <div class="card-body">
                     <h2 class="card-title">Details</h2>
@@ -98,7 +102,7 @@
             </div>
             
             <!-- Version History -->
-            <div class="card bg-base-100 shadow mt-6">
+            <div class="card bg-base-100 shadow">
                 <div class="card-body">
                     <h2 class="card-title">Version History</h2>
                     
@@ -150,10 +154,8 @@
                     </div>
                     {% else %}
                     <div class="alert alert-warning">
-                        <div>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                            <span>No versions available for this document.</span>
-                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <span>No versions available for this document.</span>
                     </div>
                     {% endif %}
                 </div>
@@ -161,17 +163,15 @@
         </div>
         
         <!-- Sidebar -->
-        <div class="lg:col-span-1">
+        <div class="lg:col-span-1 flex flex-col gap-4">
             {% if document.is_private %}
-            <div class="card bg-base-100 shadow mb-6">
+            <div class="card bg-base-100 shadow">
                 <div class="card-body">
                     <h2 class="card-title">Access Control</h2>
                     
                     <div class="alert alert-info mb-4">
-                        <div>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span>This document is private and requires explicit access permission.</span>
-                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>This document is private and requires explicit access permission.</span>
                     </div>
                     
                     {% if perms.documents.share_document %}
