@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Courts | Daedalus{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">Courts</h1>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-base-200 p-4 rounded-lg mb-6">
+        <form method="get" class="flex flex-wrap gap-4">
+            <div class="form-control w-full max-w-xs">
+                <label class="label">
+                    <span class="label-text">Court Level</span>
+                </label>
+                <select name="level" class="select select-bordered">
+                    <option value="">All Levels</option>
+                    <option value="federal" {% if level == 'federal' %}selected{% endif %}>Federal</option>
+                    <option value="state" {% if level == 'state' %}selected{% endif %}>State</option>
+                    <option value="local" {% if level == 'local' %}selected{% endif %}>Local</option>
+                    <option value="administrative" {% if level == 'administrative' %}selected{% endif %}>Administrative</option>
+                </select>
+            </div>
+            <div class="form-control w-full max-w-xs">
+                <label class="label">
+                    <span class="label-text">State</span>
+                </label>
+                <select name="state" class="select select-bordered">
+                    <option value="">All States</option>
+                    {% for state_option in states %}
+                        {% if state_option %}
+                            <option value="{{ state_option }}" {% if state == state_option %}selected{% endif %}>{{ state_option }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mt-8">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'docket:court_list' %}" class="btn btn-ghost">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Courts Table -->
+    <div class="overflow-x-auto">
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Level</th>
+                    <th>Jurisdiction</th>
+                    <th>Location</th>
+                    <th>E-Filing</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for court in courts %}
+                <tr>
+                    <td>{{ court.name }}</td>
+                    <td>{{ court.get_level_display }}</td>
+                    <td>{{ court.jurisdiction }}</td>
+                    <td>
+                        {% if court.city and court.state %}
+                            {{ court.city }}, {{ court.state }}
+                        {% elif court.city %}
+                            {{ court.city }}
+                        {% elif court.state %}
+                            {{ court.state }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if court.e_filing_available %}
+                            <span class="badge badge-success">Available</span>
+                            {% if court.e_filing_url %}
+                                <a href="{{ court.e_filing_url }}" target="_blank" class="link link-primary text-xs">
+                                    View
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-ghost">Not Available</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'docket:court_detail' court.id %}" class="btn btn-sm btn-outline">
+                            View Details
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">No courts found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

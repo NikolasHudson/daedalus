@@ -35,6 +35,9 @@ INSTALLED_APPS = [
     "users.apps.UsersConfig",
     "aws.apps.AWSConfig",
     "documents",
+    "cases.apps.CasesConfig",
+    "clients.apps.ClientsConfig",
+    "docket.apps.DocketConfig",
 ]
 
 MIDDLEWARE = [

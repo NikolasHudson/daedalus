@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dockets | Daedalus{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">Case Dockets</h1>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-base-200 p-4 rounded-lg mb-6">
+        <form method="get" class="flex flex-wrap gap-4">
+            <div class="form-control w-full max-w-xs">
+                <label class="label">
+                    <span class="label-text">Court</span>
+                </label>
+                <select name="court" class="select select-bordered">
+                    <option value="">All Courts</option>
+                    {% for court_option in courts %}
+                        <option value="{{ court_option.id }}" {% if selected_court == court_option.id|stringformat:"i" %}selected{% endif %}>
+                            {{ court_option.name }} ({{ court_option.get_level_display }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-control">
+                <label class="label cursor-pointer">
+                    <span class="label-text mr-4">Active Cases Only</span>
+                    <input type="checkbox" name="active" value="true" class="checkbox" {% if active_only %}checked{% endif %}>
+                </label>
+            </div>
+            <div class="mt-8">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'docket:docket_list' %}" class="btn btn-ghost">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Dockets Table -->
+    <div class="overflow-x-auto">
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>Case Name</th>
+                    <th>Docket Number</th>
+                    <th>Court</th>
+                    <th>Filed Date</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for docket in dockets %}
+                <tr>
+                    <td>{{ docket.case_name }}</td>
+                    <td>{{ docket.docket_number }}</td>
+                    <td>{{ docket.court.name }}</td>
+                    <td>{{ docket.date_filed }}</td>
+                    <td>{{ docket.assigned_to|default:"-" }}</td>
+                    <td>
+                        {% if docket.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-ghost">Terminated</span>
+                            {% if docket.date_terminated %}
+                                <span class="text-xs">({{ docket.date_terminated }})</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'docket:docket_detail' docket.id %}" class="btn btn-sm btn-outline">
+                            View Details
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4">No dockets found with the selected filters.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

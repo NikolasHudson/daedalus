@@ -1,0 +1,635 @@
+Next Implementation Step: Case Management System
+Overview
+I'll now detail the implementation plan for the Case Management System, which is the next logical step in our development sequence. This is a critical component that will serve as the foundation for the Co-Counsel Portal functionality.
+This component should be placed in Phase 3: Core Application Features under the Client and Case Management section.
+Case Management System Plan
+Deliverables
+
+Case Categories: Model for organizing cases by practice area (personal injury, class actions, family law, etc.)
+Case Model: Core entity for managing legal cases with client associations
+Matter Model: For organizing sub-components of complex cases
+Case Folder System: Hierarchical folder structure for organizing documents within cases
+Case-Document Relationships: Association between cases, folders, and documents
+Admin Interfaces: For case management in the Django admin
+Frontend Views: For listing, viewing, and managing cases
+
+Implementation Details
+1. Create the Cases App
+bashCopycd daedlaus
+python manage.py startapp cases
+Add the app to INSTALLED_APPS in daedlaus/settings/base.py.
+2. Core Models
+pythonCopy# cases/models.py
+
+from django.db import models
+from django.conf import settings
+from django.urls import reverse
+import uuid
+
+class CaseCategory(models.Model):
+    """Categories for organizing cases by practice area"""
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='subcategories'
+    )
+    color = models.CharField(max_length=20, blank=True, help_text="Color code for UI display")
+    icon = models.CharField(max_length=50, blank=True, help_text="Icon name for UI display")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Case Category"
+        verbose_name_plural = "Case Categories"
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+class Case(models.Model):
+    """Main case model for legal matters"""
+    STATUS_CHOICES = (
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('pending', 'Pending'),
+        ('closed', 'Closed'),
+        ('archived', 'Archived'),
+    )
+    
+    # Basic information
+    title = models.CharField(max_length=255)
+    case_number = models.CharField(max_length=100, blank=True)
+    category = models.ForeignKey(
+        CaseCategory, 
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='cases'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='draft'
+    )
+    description = models.TextField(blank=True)
+    
+    # Unique identifier
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
+    
+    # Client information (placeholder until Client model is implemented)
+    client_name = models.CharField(max_length=255)
+    client_email = models.EmailField(blank=True)
+    client_phone = models.CharField(max_length=20, blank=True)
+    
+    # Dates
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    filed_date = models.DateField(null=True, blank=True)
+    
+    # Team assignments
+    assigned_attorneys = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, 
+        related_name='assigned_cases',
+        blank=True
+    )
+    
+    # Tracking
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_cases'
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='updated_cases'
+    )
+    
+    # Portal functionality (foundation for Co-Counsel Portal)
+    is_portal_enabled = models.BooleanField(
+        default=False,
+        help_text="Enable sharing through Co-Counsel Portal"
+    )
+    portal_title = models.CharField(
+        max_length=255, 
+        blank=True,
+        help_text="Custom title for portal display (defaults to case title)"
+    )
+    portal_description = models.TextField(
+        blank=True,
+        help_text="Custom description for portal display"
+    )
+    
+    class Meta:
+        verbose_name = "Case"
+        verbose_name_plural = "Cases"
+        ordering = ['-updated_at']
+        permissions = [
+            ("view_portal_case", "Can view case in portal"),
+            ("share_case", "Can share case with external counsel"),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} ({self.case_number})"
+    
+    def get_absolute_url(self):
+        return reverse('cases:case_detail', args=[self.uuid])
+    
+    def save(self, *args, **kwargs):
+        # Set portal title to case title if not provided
+        if not self.portal_title and self.title:
+            self.portal_title = self.title
+        super().save(*args, **kwargs)
+
+class Matter(models.Model):
+    """
+    Sub-components for organizing complex cases
+    Matters allow for dividing a case into distinct workstreams
+    """
+    name = models.CharField(max_length=255)
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='matters'
+    )
+    description = models.TextField(blank=True)
+    
+    # Status and tracking
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_matters'
+    )
+    
+    class Meta:
+        verbose_name = "Matter"
+        verbose_name_plural = "Matters"
+        ordering = ['name']
+        unique_together = [['case', 'name']]
+    
+    def __str__(self):
+        return f"{self.name} - {self.case.title}"
+
+class CaseFolder(models.Model):
+    """
+    Hierarchical folder structure for organizing documents within cases
+    """
+    name = models.CharField(max_length=255)
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='folders'
+    )
+    matter = models.ForeignKey(
+        Matter,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='folders'
+    )
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='subfolders'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_folders'
+    )
+    
+    class Meta:
+        verbose_name = "Case Folder"
+        verbose_name_plural = "Case Folders"
+        unique_together = [['case', 'parent', 'name']]
+        ordering = ['name']
+    
+    def __str__(self):
+        if self.parent:
+            return f"{self.parent}/{self.name}"
+        return self.name
+    
+    @property
+    def full_path(self):
+        """Return the full path of this folder"""
+        if not self.parent:
+            return self.name
+        return f"{self.parent.full_path}/{self.name}"
+
+# This relationship model will connect the Document model with Cases/Folders
+class CaseDocument(models.Model):
+    """
+    Association between documents and cases/folders
+    This allows documents to be organized within the case folder structure
+    """
+    document = models.ForeignKey(
+        'documents.Document',
+        on_delete=models.CASCADE,
+        related_name='case_associations'
+    )
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='documents'
+    )
+    folder = models.ForeignKey(
+        CaseFolder,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='documents'
+    )
+    matter = models.ForeignKey(
+        Matter,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='documents'
+    )
+    added_at = models.DateTimeField(auto_now_add=True)
+    added_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT
+    )
+    
+    class Meta:
+        verbose_name = "Case Document"
+        verbose_name_plural = "Case Documents"
+        unique_together = [['document', 'case']]
+    
+    def __str__(self):
+        return f"{self.document} in {self.case}"
+3. Admin Interface
+pythonCopy# cases/admin.py
+
+from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
+from .models import CaseCategory, Case, Matter, CaseFolder, CaseDocument
+
+@admin.register(CaseCategory)
+class CaseCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'parent', 'created_at')
+    search_fields = ('name', 'description')
+    list_filter = ('created_at',)
+    ordering = ('name',)
+
+class MatterInline(admin.TabularInline):
+    model = Matter
+    extra = 0
+    fields = ('name', 'description', 'is_active', 'created_by', 'created_at')
+    readonly_fields = ('created_by', 'created_at')
+
+class CaseFolderInline(admin.TabularInline):
+    model = CaseFolder
+    extra = 0
+    fields = ('name', 'parent', 'created_by', 'created_at')
+    readonly_fields = ('created_by', 'created_at')
+    fk_name = 'case'
+
+class CaseDocumentInline(admin.TabularInline):
+    model = CaseDocument
+    extra = 0
+    fields = ('document', 'folder', 'matter', 'added_by', 'added_at')
+    readonly_fields = ('added_by', 'added_at')
+    autocomplete_fields = ('document',)
+
+@admin.register(Case)
+class CaseAdmin(admin.ModelAdmin):
+    list_display = ('title', 'case_number', 'category', 'status', 'client_name', 'created_at')
+    list_filter = ('status', 'category', 'created_at')
+    search_fields = ('title', 'case_number', 'client_name')
+    
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'case_number', 'category', 'status', 'description')
+        }),
+        (_('Client Information'), {
+            'fields': ('client_name', 'client_email', 'client_phone')
+        }),
+        (_('Dates'), {
+            'fields': ('filed_date',)
+        }),
+        (_('Team'), {
+            'fields': ('assigned_attorneys',)
+        }),
+        (_('Portal Settings'), {
+            'fields': ('is_portal_enabled', 'portal_title', 'portal_description'),
+            'classes': ('collapse',),
+            'description': _('These settings control how this case appears in the Co-Counsel Portal')
+        }),
+        (_('System Information'), {
+            'fields': ('uuid', 'created_by', 'updated_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('uuid', 'created_by', 'updated_by', 'created_at', 'updated_at')
+    inlines = [MatterInline, CaseFolderInline, CaseDocumentInline]
+    filter_horizontal = ('assigned_attorneys',)
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # New object
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if hasattr(instance, 'created_by') and not instance.created_by:
+                instance.created_by = request.user
+            if hasattr(instance, 'added_by') and not instance.added_by:
+                instance.added_by = request.user
+            instance.save()
+        formset.save_m2m()
+
+@admin.register(Matter)
+class MatterAdmin(admin.ModelAdmin):
+    list_display = ('name', 'case', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'case__title')
+    readonly_fields = ('created_by', 'created_at', 'updated_at')
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # New object
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+@admin.register(CaseFolder)
+class CaseFolderAdmin(admin.ModelAdmin):
+    list_display = ('name', 'case', 'matter', 'parent', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('name', 'case__title')
+    readonly_fields = ('created_by', 'created_at')
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # New object
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+4. URLs and Views
+pythonCopy# cases/urls.py
+
+from django.urls import path
+from . import views
+
+app_name = 'cases'
+
+urlpatterns = [
+    path('', views.case_list, name='case_list'),
+    path('create/', views.case_create, name='case_create'),
+    path('<uuid:uuid>/', views.case_detail, name='case_detail'),
+    path('<uuid:uuid>/edit/', views.case_edit, name='case_edit'),
+    path('<uuid:uuid>/folders/', views.folder_list, name='folder_list'),
+    path('<uuid:uuid>/folders/create/', views.folder_create, name='folder_create'),
+    path('<uuid:uuid>/documents/', views.case_documents, name='case_documents'),
+    path('<uuid:uuid>/add-document/', views.add_document, name='add_document'),
+]
+pythonCopy# cases/views.py
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, permission_required
+from django.http import Http404
+from django.contrib import messages
+from django.utils.translation import gettext as _
+
+from .models import Case, CaseCategory, Matter, CaseFolder, CaseDocument
+from documents.models import Document
+
+@login_required
+def case_list(request):
+    """List all cases the user has access to"""
+    # Filter by category if requested
+    category_id = request.GET.get('category')
+    if category_id:
+        try:
+            category = CaseCategory.objects.get(id=category_id)
+            cases = Case.objects.filter(category=category)
+            title = f"Cases in {category.name}"
+        except CaseCategory.DoesNotExist:
+            cases = Case.objects.all()
+            title = "All Cases"
+    else:
+        cases = Case.objects.all()
+        title = "All Cases"
+    
+    # Get all categories for filter dropdown
+    categories = CaseCategory.objects.all().order_by('name')
+    
+    return render(request, 'cases/case_list.html', {
+        'cases': cases,
+        'title': title,
+        'categories': categories,
+        'selected_category': category_id
+    })
+
+@login_required
+def case_detail(request, uuid):
+    """Display case details"""
+    case = get_object_or_404(Case, uuid=uuid)
+    
+    # Get matters
+    matters = case.matters.all()
+    
+    # Get root folders
+    root_folders = case.folders.filter(parent=None)
+    
+    # Get documents directly in case root
+    root_documents = case.documents.filter(folder=None)
+    
+    return render(request, 'cases/case_detail.html', {
+        'case': case,
+        'matters': matters,
+        'root_folders': root_folders,
+        'root_documents': root_documents,
+    })
+
+@login_required
+@permission_required('cases.add_case', raise_exception=True)
+def case_create(request):
+    """Create a new case"""
+    # Implementation will follow in next phase
+    pass
+
+@login_required
+@permission_required('cases.change_case', raise_exception=True)
+def case_edit(request, uuid):
+    """Edit existing case"""
+    # Implementation will follow in next phase
+    pass
+
+@login_required
+def folder_list(request, uuid):
+    """List folders for a case"""
+    case = get_object_or_404(Case, uuid=uuid)
+    folders = case.folders.all()
+    
+    return render(request, 'cases/folder_list.html', {
+        'case': case,
+        'folders': folders,
+    })
+
+@login_required
+@permission_required('cases.add_casefolder', raise_exception=True)
+def folder_create(request, uuid):
+    """Create a new folder in a case"""
+    # Implementation will follow in next phase
+    pass
+
+@login_required
+def case_documents(request, uuid):
+    """List documents for a case"""
+    case = get_object_or_404(Case, uuid=uuid)
+    
+    # Get all associated documents
+    case_docs = case.documents.all()
+    
+    return render(request, 'cases/case_documents.html', {
+        'case': case,
+        'case_documents': case_docs,
+    })
+
+@login_required
+@permission_required('cases.add_casedocument', raise_exception=True)
+def add_document(request, uuid):
+    """Add an existing document to a case"""
+    # Implementation will follow in next phase
+    pass
+5. Templates
+Create the following template files:
+
+templates/cases/case_list.html
+templates/cases/case_detail.html
+templates/cases/folder_list.html
+templates/cases/case_documents.html
+
+The templates will be implemented using Django Templates with HTMX for interactive components and DaisyUI for styling, following the project's frontend configuration requirements.
+6. Update settings.py
+Add the cases app to INSTALLED_APPS in daedlaus/settings/base.py:
+pythonCopyINSTALLED_APPS = [
+    # ...existing apps...
+    "cases.apps.CasesConfig",
+]
+7. Update Main URLs Configuration
+Update daedlaus/urls.py to include case URLs:
+pythonCopyurlpatterns = [
+    # ...existing URL patterns...
+    path('cases/', include('cases.urls')),
+]
+Data Flow and Integration Points
+
+Document-Case Association:
+
+Documents created in the document module can be associated with cases
+The CaseDocument model serves as the junction between cases and documents
+This allows for organizing documents within the case folder structure
+
+
+Case-Matter-Folder Hierarchy:
+
+Cases can contain multiple matters for complex litigation
+Both cases and matters can contain folders in a hierarchical structure
+Documents can be placed in specific folders within a case or matter
+
+
+Portal Integration:
+
+The Case model includes fields for portal sharing (is_portal_enabled, portal_title, etc.)
+These fields provide the foundation for the future Co-Counsel Portal functionality
+Only super admins will be able to control these settings (enforced through permissions)
+
+
+
+Technical Considerations
+
+UUID for Public References:
+
+Cases use UUID for public URLs rather than sequential IDs
+This enhances security by making case IDs non-guessable
+
+
+Permission System:
+
+Custom permissions for portal-specific actions
+Django's built-in permission system used for access control
+
+
+Hierarchical Data:
+
+Self-referencing foreign keys for categories and folders
+Consider implementing efficient tree traversal using django-mptt if folder hierarchies become deep
+
+
+Performance:
+
+Optimize queries for document listing by using select_related and prefetch_related
+Implement pagination for case and document listings
+
+
+
+Future Extensions
+
+Client App Integration:
+
+Replace placeholder client fields with proper foreign keys once the Client app is implemented
+Update admin interfaces and forms accordingly
+
+
+Full Co-Counsel Portal:
+
+Extend the Case model with additional portal-related fields
+Implement external user access controls
+Create portal-specific views for external users
+
+
+Advanced Document Management:
+
+Implement drag-and-drop folder organization
+Add bulk document operations
+
+
+
+Testing Strategy
+
+Model Tests:
+
+Test case creation and validation
+Test folder hierarchy operations
+Test document association with cases
+
+
+View Tests:
+
+Test case listing and filtering
+Test case detail view
+Test permission enforcement
+
+
+Security Tests:
+
+Verify proper permission checks
+Test UUID-based URLs for security
+
+
+
+Verification Steps
+After implementation, verify the component by:
+
+Creating test case categories
+Creating test cases
+Creating folders within cases
+Associating documents with cases
+Verifying the case detail view displays correctly

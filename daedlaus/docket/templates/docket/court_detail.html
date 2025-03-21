@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ court.name }} | Daedalus{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <a href="{% url 'docket:court_list' %}" class="btn btn-sm btn-ghost">
+            &larr; Back to Courts
+        </a>
+    </div>
+
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">{{ court.name }}</h1>
+    </div>
+
+    <!-- Court Information -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Basic Information</h2>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div class="text-sm opacity-70">Level:</div>
+                    <div>{{ court.get_level_display }}</div>
+
+                    <div class="text-sm opacity-70">Jurisdiction:</div>
+                    <div>{{ court.jurisdiction }}</div>
+
+                    {% if court.pacer_code %}
+                    <div class="text-sm opacity-70">PACER Code:</div>
+                    <div>{{ court.pacer_code }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Location & Contact</h2>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    {% if court.address %}
+                    <div class="text-sm opacity-70">Address:</div>
+                    <div>{{ court.address }}</div>
+                    {% endif %}
+
+                    {% if court.city or court.state %}
+                    <div class="text-sm opacity-70">City/State:</div>
+                    <div>
+                        {% if court.city %}{{ court.city }}{% endif %}
+                        {% if court.city and court.state %},{% endif %}
+                        {% if court.state %}{{ court.state }}{% endif %}
+                        {% if court.postal_code %} {{ court.postal_code }}{% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if court.phone %}
+                    <div class="text-sm opacity-70">Phone:</div>
+                    <div>{{ court.phone }}</div>
+                    {% endif %}
+
+                    {% if court.website %}
+                    <div class="text-sm opacity-70">Website:</div>
+                    <div>
+                        <a href="{{ court.website }}" target="_blank" class="link link-primary">
+                            {{ court.website }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Electronic Filing -->
+    <div class="card bg-base-100 shadow-xl mb-8">
+        <div class="card-body">
+            <h2 class="card-title">Electronic Filing</h2>
+            <div class="mt-4">
+                {% if court.e_filing_available %}
+                    <div class="alert alert-success">
+                        <div>
+                            <span class="font-bold">E-Filing is available for this court.</span>
+                            {% if court.e_filing_url %}
+                            <p class="mt-2">
+                                Access e-filing system:
+                                <a href="{{ court.e_filing_url }}" target="_blank" class="link link-primary">
+                                    {{ court.e_filing_url }}
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <div>
+                            <span>Electronic filing is not available for this court.</span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Dockets -->
+    <h2 class="text-xl font-semibold mb-4">Recent Dockets ({{ dockets|length }})</h2>
+    <div class="overflow-x-auto">
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>Case Name</th>
+                    <th>Docket Number</th>
+                    <th>Filed Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for docket in dockets %}
+                <tr>
+                    <td>{{ docket.case_name }}</td>
+                    <td>{{ docket.docket_number }}</td>
+                    <td>{{ docket.date_filed }}</td>
+                    <td>
+                        {% if docket.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-ghost">Terminated</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'docket:docket_detail' docket.id %}" class="btn btn-sm btn-outline">
+                            View Docket
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4">No dockets found for this court.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,696 @@
+Next Implementation Step: Client Management System
+Overview
+Now that we've implemented the Case Management System, our next logical step is to develop the Client Management System. This component is a fundamental part of any legal practice management solution and will allow us to properly associate cases with real client records rather than using placeholder fields.
+This component should be placed in Phase 3: Core Application Features, following the Client and Case Management section.
+Client Management System Plan
+Deliverables
+
+Client Model: Core entity for both individual and organization clients
+Contact Model: For managing multiple contacts associated with organization clients
+Client-Case Relationships: Proper linking between clients and their cases
+Client Classification: Categorization and grouping of clients
+Admin Interfaces: For comprehensive client management
+Frontend Views: For listing, viewing, and managing clients
+
+Implementation Details
+1. Create the Clients App
+bashCopycd daedlaus
+python manage.py startapp clients
+Add the app to INSTALLED_APPS in daedlaus/settings/base.py.
+2. Core Models
+pythonCopy# clients/models.py
+
+from django.db import models
+from django.conf import settings
+from django.urls import reverse
+import uuid
+
+class ClientType(models.TextChoices):
+    INDIVIDUAL = 'individual', 'Individual'
+    ORGANIZATION = 'organization', 'Organization'
+
+class ClientCategory(models.Model):
+    """
+    Categories for classifying clients (e.g., VIP, Standard, Pro Bono)
+    """
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    color = models.CharField(max_length=20, blank=True, help_text="Color code for UI display")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Client Category"
+        verbose_name_plural = "Client Categories"
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+class Client(models.Model):
+    """
+    Main client model for both individuals and organizations
+    """
+    # Basic information
+    name = models.CharField(max_length=255, help_text="Full name for individuals, organization name for entities")
+    client_type = models.CharField(
+        max_length=20,
+        choices=ClientType.choices,
+        default=ClientType.INDIVIDUAL
+    )
+    category = models.ForeignKey(
+        ClientCategory, 
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='clients'
+    )
+    
+    # Unique identifier
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
+    
+    # Contact information
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    address_line1 = models.CharField(max_length=255, blank=True)
+    address_line2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    
+    # Individual-specific fields
+    date_of_birth = models.DateField(null=True, blank=True)
+    ssn_last_four = models.CharField(max_length=4, blank=True, verbose_name="Last 4 of SSN")
+    
+    # Organization-specific fields
+    tax_id = models.CharField(max_length=50, blank=True)
+    industry = models.CharField(max_length=100, blank=True)
+    
+    # Client status and classification
+    is_active = models.BooleanField(default=True)
+    intake_date = models.DateField(null=True, blank=True)
+    referral_source = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    
+    # Privacy and security classification
+    is_confidential = models.BooleanField(
+        default=False,
+        help_text="Restrict access to this client to assigned attorneys only"
+    )
+    data_classification = models.CharField(
+        max_length=20,
+        choices=[
+            ('public', 'Public'),
+            ('confidential', 'Confidential'),
+            ('privileged', 'Privileged')
+        ],
+        default='confidential'
+    )
+    
+    # Tracking
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_clients'
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='updated_clients'
+    )
+    
+    class Meta:
+        verbose_name = "Client"
+        verbose_name_plural = "Clients"
+        ordering = ['name']
+        permissions = [
+            ("view_confidential_client", "Can view confidential client information"),
+        ]
+    
+    def __str__(self):
+        return self.name
+    
+    def get_absolute_url(self):
+        return reverse('clients:client_detail', args=[self.uuid])
+    
+    @property
+    def is_individual(self):
+        return self.client_type == ClientType.INDIVIDUAL
+    
+    @property
+    def is_organization(self):
+        return self.client_type == ClientType.ORGANIZATION
+    
+    @property
+    def full_address(self):
+        """Returns the full formatted address"""
+        parts = [
+            self.address_line1,
+            self.address_line2,
+            f"{self.city}, {self.state} {self.postal_code}".strip(),
+            self.country
+        ]
+        return "\n".join(p for p in parts if p)
+
+class ClientContact(models.Model):
+    """
+    Contact people for organization clients
+    """
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='contacts'
+    )
+    name = models.CharField(max_length=255)
+    title = models.CharField(max_length=100, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    is_primary = models.BooleanField(
+        default=False,
+        help_text="Designate as the primary contact for this organization"
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Client Contact"
+        verbose_name_plural = "Client Contacts"
+        ordering = ['-is_primary', 'name']
+    
+    def __str__(self):
+        return f"{self.name} - {self.client.name}"
+    
+    def save(self, *args, **kwargs):
+        # Ensure only one primary contact per client
+        if self.is_primary:
+            ClientContact.objects.filter(
+                client=self.client, 
+                is_primary=True
+            ).exclude(pk=self.pk).update(is_primary=False)
+        super().save(*args, **kwargs)
+
+class ClientDocument(models.Model):
+    """
+    Association between documents and clients
+    This allows for client-specific documents (e.g., intake forms, agreements)
+    """
+    document = models.ForeignKey(
+        'documents.Document',
+        on_delete=models.CASCADE,
+        related_name='client_associations'
+    )
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='documents'
+    )
+    document_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('engagement', 'Engagement Agreement'),
+            ('id', 'Identification Document'),
+            ('intake', 'Intake Form'),
+            ('correspondence', 'Correspondence'),
+            ('other', 'Other')
+        ],
+        default='other'
+    )
+    added_at = models.DateTimeField(auto_now_add=True)
+    added_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT
+    )
+    
+    class Meta:
+        verbose_name = "Client Document"
+        verbose_name_plural = "Client Documents"
+        unique_together = [['document', 'client']]
+    
+    def __str__(self):
+        return f"{self.document} for {self.client}"
+3. Update Case Model to Use Client Foreign Key
+pythonCopy# cases/models.py - Update the Case model to use a proper client relationship
+
+# Import the Client model
+from clients.models import Client
+
+class Case(models.Model):
+    # ... existing fields ...
+    
+    # Replace placeholder client fields with proper foreign key
+    client = models.ForeignKey(
+        'clients.Client',
+        on_delete=models.PROTECT,  # Protect ensures cases can't be deleted by accident
+        related_name='cases',
+        null=True  # Allow null only for data migration
+    )
+    
+    # ... rest of the model ...
+4. Admin Interface
+pythonCopy# clients/admin.py
+
+from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
+from .models import ClientCategory, Client, ClientContact, ClientDocument
+
+@admin.register(ClientCategory)
+class ClientCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at')
+    search_fields = ('name', 'description')
+    ordering = ('name',)
+
+class ClientContactInline(admin.TabularInline):
+    model = ClientContact
+    extra = 0
+    fields = ('name', 'title', 'email', 'phone', 'is_primary')
+
+class ClientDocumentInline(admin.TabularInline):
+    model = ClientDocument
+    extra = 0
+    fields = ('document', 'document_type', 'added_by', 'added_at')
+    readonly_fields = ('added_by', 'added_at')
+    autocomplete_fields = ('document',)
+
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    list_display = ('name', 'client_type', 'category', 'email', 'phone', 'is_active', 'created_at')
+    list_filter = ('client_type', 'is_active', 'category', 'data_classification', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'tax_id', 'notes')
+    
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'client_type', 'category', 'is_active')
+        }),
+        (_('Contact Information'), {
+            'fields': ('email', 'phone', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country')
+        }),
+        (_('Individual Details'), {
+            'fields': ('date_of_birth', 'ssn_last_four'),
+            'classes': ('collapse',),
+            'description': _('These fields apply only to individual clients')
+        }),
+        (_('Organization Details'), {
+            'fields': ('tax_id', 'industry'),
+            'classes': ('collapse',),
+            'description': _('These fields apply only to organization clients')
+        }),
+        (_('Client Status'), {
+            'fields': ('intake_date', 'referral_source', 'notes')
+        }),
+        (_('Security Classification'), {
+            'fields': ('is_confidential', 'data_classification'),
+            'description': _('These settings control access restrictions to this client')
+        }),
+        (_('System Information'), {
+            'fields': ('uuid', 'created_by', 'updated_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('uuid', 'created_by', 'updated_by', 'created_at', 'updated_at')
+    inlines = [ClientContactInline, ClientDocumentInline]
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # New object
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if hasattr(instance, 'added_by') and not instance.added_by:
+                instance.added_by = request.user
+            instance.save()
+        formset.save_m2m()
+
+@admin.register(ClientContact)
+class ClientContactAdmin(admin.ModelAdmin):
+    list_display = ('name', 'client', 'title', 'email', 'phone', 'is_primary')
+    list_filter = ('is_primary', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'client__name')
+    autocomplete_fields = ('client',)
+5. URLs and Views
+pythonCopy# clients/urls.py
+
+from django.urls import path
+from . import views
+
+app_name = 'clients'
+
+urlpatterns = [
+    path('', views.client_list, name='client_list'),
+    path('create/', views.client_create, name='client_create'),
+    path('<uuid:uuid>/', views.client_detail, name='client_detail'),
+    path('<uuid:uuid>/edit/', views.client_edit, name='client_edit'),
+    path('<uuid:uuid>/add-contact/', views.add_contact, name='add_contact'),
+    path('<uuid:uuid>/contacts/<int:contact_id>/edit/', views.edit_contact, name='edit_contact'),
+    path('<uuid:uuid>/documents/', views.client_documents, name='client_documents'),
+    path('<uuid:uuid>/add-document/', views.add_document, name='add_document'),
+    path('<uuid:uuid>/cases/', views.client_cases, name='client_cases'),
+]
+pythonCopy# clients/views.py
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, permission_required
+from django.http import Http404
+from django.contrib import messages
+from django.utils.translation import gettext as _
+
+from .models import Client, ClientCategory, ClientContact, ClientDocument
+
+@login_required
+def client_list(request):
+    """List all clients the user has access to"""
+    # Filter by category if requested
+    category_id = request.GET.get('category')
+    client_type = request.GET.get('type')
+    
+    # Start with all clients
+    clients = Client.objects.all()
+    
+    # Apply filters
+    if category_id:
+        try:
+            category = ClientCategory.objects.get(id=category_id)
+            clients = clients.filter(category=category)
+            title = f"Clients in {category.name}"
+        except ClientCategory.DoesNotExist:
+            title = "All Clients"
+    else:
+        title = "All Clients"
+    
+    if client_type in ['individual', 'organization']:
+        clients = clients.filter(client_type=client_type)
+        type_display = "Individuals" if client_type == 'individual' else "Organizations"
+        title = f"{type_display}" if title == "All Clients" else f"{type_display} in {category.name}"
+    
+    # Get all categories for filter dropdown
+    categories = ClientCategory.objects.all().order_by('name')
+    
+    return render(request, 'clients/client_list.html', {
+        'clients': clients,
+        'title': title,
+        'categories': categories,
+        'selected_category': category_id,
+        'selected_type': client_type
+    })
+
+@login_required
+def client_detail(request, uuid):
+    """Display client details"""
+    client = get_object_or_404(Client, uuid=uuid)
+    
+    # Check for confidential access
+    if client.is_confidential and not request.user.has_perm('clients.view_confidential_client'):
+        messages.error(request, _("You don't have permission to view this confidential client."))
+        return redirect('clients:client_list')
+    
+    # Get contacts if organization
+    contacts = []
+    if client.is_organization:
+        contacts = client.contacts.all().order_by('-is_primary', 'name')
+    
+    # Get associated cases
+    cases = client.cases.all().order_by('-created_at')
+    
+    # Get client documents
+    documents = client.documents.all().order_by('-added_at')
+    
+    return render(request, 'clients/client_detail.html', {
+        'client': client,
+        'contacts': contacts,
+        'cases': cases,
+        'documents': documents,
+    })
+
+@login_required
+@permission_required('clients.add_client', raise_exception=True)
+def client_create(request):
+    """Create a new client"""
+    # Implementation will follow in next phase
+    pass
+
+@login_required
+@permission_required('clients.change_client', raise_exception=True)
+def client_edit(request, uuid):
+    """Edit existing client"""
+    # Implementation will follow in next phase
+    pass
+
+@login_required
+def client_documents(request, uuid):
+    """List documents for a client"""
+    client = get_object_or_404(Client, uuid=uuid)
+    
+    # Check for confidential access
+    if client.is_confidential and not request.user.has_perm('clients.view_confidential_client'):
+        messages.error(request, _("You don't have permission to view this confidential client."))
+        return redirect('clients:client_list')
+    
+    # Get all associated documents
+    client_docs = client.documents.all().order_by('-added_at')
+    
+    return render(request, 'clients/client_documents.html', {
+        'client': client,
+        'client_documents': client_docs,
+    })
+
+@login_required
+@permission_required('clients.add_clientdocument', raise_exception=True)
+def add_document(request, uuid):
+    """Add an existing document to a client"""
+    # Implementation will follow in next phase
+    pass
+
+@login_required
+def client_cases(request, uuid):
+    """List cases for a client"""
+    client = get_object_or_404(Client, uuid=uuid)
+    
+    # Check for confidential access
+    if client.is_confidential and not request.user.has_perm('clients.view_confidential_client'):
+        messages.error(request, _("You don't have permission to view this confidential client."))
+        return redirect('clients:client_list')
+    
+    # Get all associated cases
+    cases = client.cases.all().order_by('-created_at')
+    
+    return render(request, 'clients/client_cases.html', {
+        'client': client,
+        'cases': cases,
+    })
+
+@login_required
+@permission_required('clients.add_clientcontact', raise_exception=True)
+def add_contact(request, uuid):
+    """Add a contact to an organization client"""
+    # Implementation will follow in next phase
+    pass
+
+@login_required
+@permission_required('clients.change_clientcontact', raise_exception=True)
+def edit_contact(request, uuid, contact_id):
+    """Edit a contact for an organization client"""
+    # Implementation will follow in next phase
+    pass
+6. Data Migration for Existing Cases
+Create a migration to move client data from Case model to Client model and update foreign keys:
+pythonCopy# clients/migrations/manual_migration.py
+
+from django.db import migrations, models
+import django.db.models.deletion
+
+def migrate_case_clients(apps, schema_editor):
+    """Create Client records for existing cases and update foreign keys"""
+    Case = apps.get_model('cases', 'Case')
+    Client = apps.get_model('clients', 'Client')
+    User = apps.get_model('users', 'User')
+    
+    # Get the first superuser for created_by field
+    admin_user = User.objects.filter(is_superuser=True).first()
+    if not admin_user:
+        # Fallback to first user if no superuser exists
+        admin_user = User.objects.first()
+    
+    # Process all cases that have client_name but no client foreign key
+    for case in Case.objects.filter(client__isnull=True).exclude(client_name=''):
+        # Create client record
+        client = Client(
+            name=case.client_name,
+            email=case.client_email,
+            phone=case.client_phone,
+            client_type='individual',  # Default to individual
+            created_by=admin_user,
+            updated_by=admin_user
+        )
+        client.save()
+        
+        # Update case with client foreign key
+        case.client = client
+        case.save()
+
+def reverse_migrate_case_clients(apps, schema_editor):
+    """Reverse migration - restore client fields from related Client objects"""
+    Case = apps.get_model('cases', 'Case')
+    
+    for case in Case.objects.filter(client__isnull=False):
+        # Copy data from client back to case fields
+        case.client_name = case.client.name
+        case.client_email = case.client.email
+        case.client_phone = case.client.phone
+        case.save()
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('clients', '0001_initial'),  # This will be your first client app migration
+        ('cases', '0001_initial'),    # This will be your first case app migration
+    ]
+
+    operations = [
+        migrations.RunPython(migrate_case_clients, reverse_migrate_case_clients),
+    ]
+7. Update settings.py
+Add the clients app to INSTALLED_APPS in daedlaus/settings/base.py:
+pythonCopyINSTALLED_APPS = [
+    # ...existing apps...
+    "clients.apps.ClientsConfig",
+]
+8. Update Main URLs Configuration
+Update daedlaus/urls.py to include client URLs:
+pythonCopyurlpatterns = [
+    # ...existing URL patterns...
+    path('clients/', include('clients.urls')),
+]
+Data Flow and Integration Points
+
+Client-Case Relationship:
+
+Cases reference clients through a foreign key
+A client can have multiple cases
+The client detail page shows all associated cases
+
+
+Client-Document Relationship:
+
+Similar to cases, clients can have associated documents
+The ClientDocument model serves as the junction between clients and documents
+Different document types can be categorized (engagement agreements, ID documents, etc.)
+
+
+Organization-Contact Relationship:
+
+Organization clients can have multiple contacts
+One contact can be designated as primary
+Contacts are managed within the client detail view
+
+
+
+Security Considerations
+
+Confidential Clients:
+
+The is_confidential flag restricts access to sensitive clients
+Custom permission view_confidential_client controls who can see these records
+Views check for appropriate permissions before displaying confidential information
+
+
+Data Classification:
+
+Classification levels (public, confidential, privileged) for data privacy
+Provides foundation for future data protection features
+Helps with compliance reporting
+
+
+PII Protection:
+
+Limited storage of personal identifiers (only last 4 of SSN)
+Fields for sensitive data are designated for proper encryption
+
+
+
+Technical Considerations
+
+Client Types:
+
+Single model with type flag rather than separate models for individual/organization
+Simplifies queries and relationships while still allowing type-specific fields
+UI can adapt based on client type
+
+
+UUID for Public References:
+
+Clients use UUID for public URLs rather than sequential IDs
+Enhances security by making client IDs non-guessable
+
+
+Polymorphic Relationships:
+
+Same client model relates to both documents and cases
+Simplifies data structure while maintaining flexibility
+
+
+
+Future Extensions
+
+Client Portal:
+
+Foundation for allowing clients to access their own information
+Account creation and login for clients
+Secure document sharing with clients
+
+
+Billing Integration:
+
+Client model includes fields needed for billing systems
+Can be extended with payment terms, billing preferences, etc.
+
+
+Enhanced CRM Features:
+
+Client relationship tracking
+Communication history
+Follow-up reminders
+
+
+
+Testing Strategy
+
+Model Tests:
+
+Test client creation and validation
+Test contact management for organizations
+Test document association
+
+
+View Tests:
+
+Test client listing and filtering
+Test client detail view with proper permissions
+Test client-case relationships
+
+
+Migration Tests:
+
+Test migration of existing case client data
+Verify data integrity after migration
+
+
+
+Verification Steps
+After implementation, verify the component by:
+
+Creating test client categories
+Creating individual and organization clients
+Adding contacts to organization clients
+Associating documents with clients
+Creating cases linked to clients
+Verifying the client detail view displays correctly

@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ docket.case_name }} | Daedalus{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <a href="{% url 'docket:docket_list' %}" class="btn btn-sm btn-ghost">
+            &larr; Back to Dockets
+        </a>
+        {% if docket.case %}
+        <a href="{% url 'cases:case_detail' docket.case.uuid %}" class="btn btn-sm btn-primary ml-2">
+            View Internal Case
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">{{ docket.case_name }}</h1>
+        <div>
+            <span class="badge badge-lg {% if docket.is_active %}badge-success{% else %}badge-ghost{% endif %}">
+                {% if docket.is_active %}Active{% else %}Terminated{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Docket Information -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Basic Information</h2>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div class="text-sm opacity-70">Docket Number:</div>
+                    <div>{{ docket.docket_number }}</div>
+
+                    <div class="text-sm opacity-70">Court:</div>
+                    <div>
+                        <a href="{% url 'docket:court_detail' docket.court.id %}" class="link link-primary">
+                            {{ docket.court.name }}
+                        </a>
+                    </div>
+
+                    <div class="text-sm opacity-70">Date Filed:</div>
+                    <div>{{ docket.date_filed }}</div>
+
+                    {% if docket.date_terminated %}
+                    <div class="text-sm opacity-70">Date Terminated:</div>
+                    <div>{{ docket.date_terminated }}</div>
+                    {% endif %}
+
+                    {% if docket.date_converted %}
+                    <div class="text-sm opacity-70">Date Converted:</div>
+                    <div>{{ docket.date_converted }}</div>
+                    {% endif %}
+
+                    {% if docket.date_discharged %}
+                    <div class="text-sm opacity-70">Date Discharged:</div>
+                    <div>{{ docket.date_discharged }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Case Details</h2>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    {% if docket.assigned_to %}
+                    <div class="text-sm opacity-70">Assigned To:</div>
+                    <div>{{ docket.assigned_to }}</div>
+                    {% endif %}
+
+                    {% if docket.referred_to %}
+                    <div class="text-sm opacity-70">Referred To:</div>
+                    <div>{{ docket.referred_to }}</div>
+                    {% endif %}
+
+                    {% if docket.cause %}
+                    <div class="text-sm opacity-70">Cause:</div>
+                    <div>{{ docket.cause }}</div>
+                    {% endif %}
+
+                    {% if docket.nature_of_suit %}
+                    <div class="text-sm opacity-70">Nature of Suit:</div>
+                    <div>{{ docket.nature_of_suit }}</div>
+                    {% endif %}
+
+                    {% if docket.jury_demand %}
+                    <div class="text-sm opacity-70">Jury Demand:</div>
+                    <div>{{ docket.jury_demand }}</div>
+                    {% endif %}
+
+                    {% if docket.jurisdiction %}
+                    <div class="text-sm opacity-70">Jurisdiction:</div>
+                    <div>{{ docket.jurisdiction }}</div>
+                    {% endif %}
+
+                    {% if docket.mdl_status %}
+                    <div class="text-sm opacity-70">MDL Status:</div>
+                    <div>{{ docket.mdl_status }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parties -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Parties</h2>
+            <a href="{% url 'docket:add_party' docket.id %}" class="btn btn-sm btn-outline">
+                Add Party
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="table w-full">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Client Link</th>
+                        <th>Attorneys</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for party in parties %}
+                    <tr>
+                        <td>{{ party.name }}</td>
+                        <td>{{ party.get_type_display }}</td>
+                        <td>
+                            {% if party.date_terminated %}
+                                <span class="badge badge-ghost">Terminated</span>
+                                <span class="text-xs">({{ party.date_terminated }})</span>
+                            {% else %}
+                                <span class="badge badge-success">Active</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if party.client %}
+                                <a href="{% url 'clients:client_detail' party.client.uuid %}" class="link link-primary">
+                                    {{ party.client.name }}
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dropdown dropdown-hover">
+                                <label tabindex="0" class="link">
+                                    {{ party.attorneys.count }} Attorney(s)
+                                </label>
+                                {% if party.attorneys.exists %}
+                                <div tabindex="0" class="dropdown-content z-[1] p-2 shadow bg-base-200 rounded-box w-52">
+                                    <ul>
+                                        {% for attorney in party.attorneys.all %}
+                                        <li class="py-1">{{ attorney.name }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <a href="{% url 'docket:add_attorney' party.id %}" class="btn btn-xs btn-outline">
+                                Add Attorney
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">No parties found for this docket.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Docket Entries -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Docket Entries</h2>
+            <div>
+                <a href="{% url 'docket:docket_entries' docket.id %}" class="btn btn-sm btn-ghost mr-2">
+                    View All
+                </a>
+                <a href="{% url 'docket:add_docket_entry' docket.id %}" class="btn btn-sm btn-outline">
+                    Add Entry
+                </a>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="table w-full">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>#</th>
+                        <th>Description</th>
+                        <th>Document</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.date_filed }}</td>
+                        <td>{{ entry.document_number|default:"-" }}</td>
+                        <td>{{ entry.description }}</td>
+                        <td>
+                            {% if entry.document %}
+                                <a href="{% url 'documents:document_detail' entry.document.uuid %}" class="link link-primary">
+                                    View Document
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4">No entries found for this docket.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

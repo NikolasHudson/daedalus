@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Docket Entries: {{ docket.case_name }} | Daedalus{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <a href="{% url 'docket:docket_detail' docket.id %}" class="btn btn-sm btn-ghost">
+            &larr; Back to Docket
+        </a>
+    </div>
+
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">Docket Entries</h1>
+            <p class="text-sm opacity-70">{{ docket.case_name }} ({{ docket.docket_number }})</p>
+        </div>
+        <a href="{% url 'docket:add_docket_entry' docket.id %}" class="btn btn-outline">
+            Add Entry
+        </a>
+    </div>
+
+    <!-- Docket Entries -->
+    <div class="overflow-x-auto">
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>Date Filed</th>
+                    <th>Date Entered</th>
+                    <th>#</th>
+                    <th>Description</th>
+                    <th>Document</th>
+                    <th>PACER ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td>{{ entry.date_filed }}</td>
+                    <td>{{ entry.date_entered }}</td>
+                    <td>{{ entry.document_number|default:"-" }}</td>
+                    <td>{{ entry.description }}</td>
+                    <td>
+                        {% if entry.document %}
+                            <a href="{% url 'documents:document_detail' entry.document.uuid %}" class="link link-primary">
+                                View Document
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if entry.pacer_doc_id %}
+                            {{ entry.pacer_doc_id }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">No entries found for this docket.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -50,6 +50,15 @@ urlpatterns = [
     # Document management URLs 
     path('documents/', include('documents.urls')),
     
+    # Case management URLs
+    path('cases/', include('cases.urls')),
+    
+    # Client management URLs
+    path('clients/', include('clients.urls')),
+    
+    # Docket management URLs
+    path('docket/', include('docket.urls')),
+    
     path('healthcheck/', healthcheck, name='healthcheck'),
 ]
 
